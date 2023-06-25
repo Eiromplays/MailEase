@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Azure.Identity" Version="1.9.0" />
+      <PackageReference Include="Microsoft.Graph" Version="5.15.0" />
+      <PackageReference Include="Microsoft.Identity.Client" Version="4.54.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\MailEase\MailEase.csproj" />
+    </ItemGroup>
+
+</Project>
