@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace MailEase;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace MailEase;
 /// </summary>
 public sealed class MailEaseConfiguration
 {
-    public string DefaultFromAddress { get; set; } = null!;
+    public EmailAddress DefaultFrom { get; set; } = null!;
     
-    public string? DefaultFromName { get; set; }
+    public ConcurrentDictionary<string, EmailAddress> FromAddresses { get; } = new();
 }

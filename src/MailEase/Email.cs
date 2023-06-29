@@ -10,6 +10,11 @@ public class Email : IMailEaseEmail
     public IEmailSender Sender { get; private set; } = new SaveToDiskEmailSender();
 
     private Email() {}
+
+    internal Email(IEmailSender sender)
+    {
+        Sender = sender;
+    }
     
     internal Email(EmailAddress from, IEmailSender sender)
     {
@@ -26,7 +31,7 @@ public class Email : IMailEaseEmail
         return this;
     }
 
-    public ICanSetSubject To(EmailAddress to)
+    ICanSetSubject ICanSetToAddress.To(EmailAddress to)
     {
         Data.To.Add(to);
         return this;

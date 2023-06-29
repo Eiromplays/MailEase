@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -14,13 +15,21 @@ public static class MailEaseServiceCollectionExtensions
         configuration.Invoke(config);
         
         var builder = new MailEaseServicesBuilder(services);
-        services.TryAdd(ServiceDescriptor.Transient<IMailEaseEmail>(x => new Email(new EmailAddress(
-                config.DefaultFromAddress,
-                config.DefaultFromName),
-            x.GetService<IEmailSender>()!)));
+        
+        config.FromAddresses.TryAdd("default", config.DefaultFrom);
+        
+        services.TryAddTransient<IEmailBuilderFactory>(provider =>
+            new EmailBuilderFactory(provider.GetService<IEmailSender>(), config.FromAddresses));
 
         return builder;
     }
+    
+    public static MailEaseServicesBuilder AddMailEase(this IServiceCollection services, string defaultFromAddress, string? defaultFromName = null, ConcurrentDictionary<string, EmailAddress>? fromEmailAddresses = null) =>
+        AddMailEase(services, configuration =>
+        {
+            configuration.DefaultFrom = new EmailAddress(defaultFromAddress, defaultFromName);
+            configuration.FromAddresses.AddRange(fromEmailAddresses ?? new ConcurrentDictionary<string, EmailAddress>());
+        });
 }
 
 public sealed class MailEaseServicesBuilder
