@@ -1,17 +1,17 @@
+using System.Text.RegularExpressions;
+
 namespace MailEase;
 
-public sealed class EmailAddress
+public record EmailAddress(string Address, string? Name = null)
 {
-    public string Address { get; set; }
-
-    public string? Name { get; set; }
-
-    public EmailAddress(string address, string? name = null)
-    {
-        Address = address;
-        Name = name;
-    }
-    
     public override string ToString() =>
-        string.IsNullOrWhiteSpace(Name) ? Address : $"{Name} <{Address}>";
+        string.IsNullOrWhiteSpace(Name) ? Address : $"{Address} <{Name}>";
+
+    public static implicit operator string(EmailAddress address) => address.ToString();
+
+    public static implicit operator EmailAddress(string address) => new(address);
+
+    public bool IsValid =>
+        !string.IsNullOrWhiteSpace(Address)
+        && Regex.IsMatch(Address, @"^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$");
 }

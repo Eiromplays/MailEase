@@ -1,17 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
-        <LangVersion>11.0</LangVersion>
-        <Authors>Eirik Sjøløkken</Authors>
-        <Nullable>enable</Nullable>
+        <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>
+        <LangVersion>latest</LangVersion>
+        <Authors>Eirik Sjøløkken (@eiromplays)</Authors>
+        <Description>A .NET library for sending emails</Description>
+        <PackageProjectUrl>https://github.com/Eiromplays/MailEase</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Eiromplays/MailEase</RepositoryUrl>
+        <PackageTags>email mail smtp</PackageTags>
+        <Version>1.0.0</Version>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
         <WarningsAsErrors>nullable</WarningsAsErrors>
         <NoWarn>$(NoWarn);NU1701;NU1702;CS0436</NoWarn>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    </PropertyGroup>
+
     <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="7.0.13" />
+      <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
     </ItemGroup>
 
 </Project>
