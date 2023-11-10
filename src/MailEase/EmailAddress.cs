@@ -11,7 +11,18 @@ public record EmailAddress(string Address, string? Name = null)
 
     public static implicit operator EmailAddress(string address) => new(address);
 
-    public bool IsValid =>
-        !string.IsNullOrWhiteSpace(Address)
-        && Regex.IsMatch(Address, @"^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$");
+    public bool IsValid
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Address))
+                return false;
+
+            // only return true if there is only 1 '@' character
+            // and it is neither the first nor the last character
+            var index = Address.IndexOf('@');
+
+            return index > 0 && index != Address.Length - 1 && index == Address.LastIndexOf('@');
+        }
+    }
 }

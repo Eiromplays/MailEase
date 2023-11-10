@@ -9,7 +9,7 @@ public sealed class InfobipErrorResponse
     public required string MessageId { get; init; }
     [JsonPropertyName("text")]
     public required string Text { get; init; }
-        
+
     public List<JsonElement> ValidationErrors { get; init; } = new();
 }
 

@@ -9,7 +9,8 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
         : base(
             new Uri(infobipParams.BaseAddress, infobipParams.Path),
             new StaticAuthHandler(new AppToken(infobipParams.ApiKey))
-        ) { }
+        )
+    { }
 
     public override async Task SendEmailAsync(
         InfobipMessage message,
@@ -37,10 +38,7 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
         if (request.SendAt.HasValue)
             if (request.SendAt.Value.UtcDateTime > DateTimeOffset.UtcNow.AddDays(30))
                 mailEaseException.AddError(
-                    new MailEaseErrorDetail(
-                        "SendAt must be in the past 30 days",
-                        MailEaseErrorCode.InvalidSendAt
-                    )
+                    BaseEmailMessageErrors.InvalidSendAt("SendAt must be in the past 30 days")
                 );
 
         return mailEaseException;
@@ -105,7 +103,7 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
     {
         var genericError = new MailEaseException();
         genericError.AddError(
-            new MailEaseErrorDetail(providerErrorResponse.Text, MailEaseErrorCode.Unknown)
+            new MailEaseErrorDetail(MailEaseErrorCode.Unknown, providerErrorResponse.Text)
         );
         foreach (var errorItem in providerErrorResponse.ValidationErrors)
         {

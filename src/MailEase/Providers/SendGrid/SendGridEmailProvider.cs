@@ -37,10 +37,7 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
         if (request.SendAt.HasValue)
             if (request.SendAt.Value.UtcDateTime > DateTimeOffset.UtcNow.AddHours(72))
                 mailEaseException.AddError(
-                    new MailEaseErrorDetail(
-                        "SendAt must be in the past 72 hours",
-                        MailEaseErrorCode.InvalidSendAt
-                    )
+                    BaseEmailMessageErrors.InvalidSendAt("SendAt must be in the past 72 hours")
                 );
 
         return mailEaseException;
@@ -93,7 +90,7 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
         foreach (var errorItem in providerErrorResponse.Errors)
         {
             genericError.AddError(
-                new MailEaseErrorDetail(errorItem.Message, MailEaseErrorCode.Unknown)
+                new MailEaseErrorDetail(MailEaseErrorCode.Unknown, errorItem.Message)
             );
         }
         return genericError;

@@ -27,8 +27,10 @@ public sealed class BaseEmailProviderTests
         new BaseTestEmailProvider();
 
     public const string Subject = "MailEase";
-    public const string From = "YOUR_FROM_EMAIL_HERE";
-    public const string To = "YOUR_TO_EMAIL_HERE";
+
+    // These do not have to be actual email addresses, as long as they follow the format of an email address.
+    public const string From = "sender@example.com";
+    public const string To = "yourmail@example.com";
 
     [Fact]
     public async Task SendEmailWithInvalidSubject()
@@ -46,7 +48,7 @@ public sealed class BaseEmailProviderTests
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.InvalidSubject));
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidSubject));
     }
 
     [Fact]
@@ -65,7 +67,7 @@ public sealed class BaseEmailProviderTests
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.InvalidFromAddress));
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidFromAddress));
     }
 
     [Fact]
@@ -84,7 +86,7 @@ public sealed class BaseEmailProviderTests
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.NoRecipients));
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.NoRecipients));
     }
 
     [Fact]
@@ -103,7 +105,7 @@ public sealed class BaseEmailProviderTests
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.InvalidToRecipients));
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidToRecipients));
     }
 
     [Fact]
@@ -123,7 +125,7 @@ public sealed class BaseEmailProviderTests
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.InvalidCcRecipients));
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidCcRecipients));
     }
 
     [Fact]
@@ -143,7 +145,7 @@ public sealed class BaseEmailProviderTests
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.InvalidBccRecipients));
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidBccRecipients));
     }
 
     [Fact]
@@ -164,7 +166,7 @@ public sealed class BaseEmailProviderTests
             .Should()
             .ThrowAsync<MailEaseException>()
             .Where(
-                x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.InvalidReplyToRecipients)
+                x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidReplyToRecipients)
             );
     }
 
@@ -185,7 +187,7 @@ public sealed class BaseEmailProviderTests
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.InvalidBody));
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidBody));
     }
 
     [Fact]
@@ -209,8 +211,8 @@ public sealed class BaseEmailProviderTests
                     x.Errors.Count == 2
                     && x.Errors.All(
                         y =>
-                            y.ErrorCode == MailEaseErrorCode.InvalidBody
-                            || y.ErrorCode == MailEaseErrorCode.InvalidSubject
+                            y.Code == MailEaseErrorCode.InvalidBody
+                            || y.Code == MailEaseErrorCode.InvalidSubject
                     )
             );
     }

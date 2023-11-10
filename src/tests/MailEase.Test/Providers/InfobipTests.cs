@@ -5,21 +5,30 @@ namespace MailEase.Test.Providers;
 public sealed class InfobipTests
 {
     private readonly IEmailProvider<InfobipMessage> _emailProvider;
+    private readonly string _subject = "MailEase";
+    private readonly string _from;
+    private readonly string _to;
 
     public InfobipTests()
     {
         var apiKey =
-            Environment.GetEnvironmentVariable("INFOBIP_API_KEY") ?? "YOUR_INFOBIP_API_KEY";
+            Environment.GetEnvironmentVariable("INFOBIP_API_KEY")
+            ?? throw new InvalidOperationException("Infobip API key cannot be empty.");
         var baseAddress = new Uri(
-            Environment.GetEnvironmentVariable("INFOBIP_BASE_URL") ?? "YOUR_INFOBIP_BASE_URL"
+            Environment.GetEnvironmentVariable("INFOBIP_BASE_URL")
+                ?? throw new InvalidOperationException("Infobip base URL cannot be empty.")
         );
+
+        _subject = Environment.GetEnvironmentVariable("INFOBIP_SUBJECT") ?? _subject;
+        _from =
+            Environment.GetEnvironmentVariable("INFOBIP_FROM")
+            ?? throw new InvalidOperationException("FROM cannot be empty.");
+        _to =
+            Environment.GetEnvironmentVariable("INFOBIP_TO")
+            ?? throw new InvalidOperationException("TO cannot be empty.");
 
         _emailProvider = Emails.Infobip(new InfobipParams(apiKey, baseAddress));
     }
-
-    public const string Subject = "MailEase";
-    public const string From = "YOUR_FROM_EMAIL_HERE";
-    public const string To = "YOUR_TO_EMAIL_HERE";
 
     [Fact]
     public void SendEmailWithEmptyApiKeyShouldThrow()
@@ -34,9 +43,9 @@ public sealed class InfobipTests
     {
         var request = new InfobipMessage
         {
-            Subject = Subject,
-            From = From,
-            ToAddresses = new List<EmailAddress> { new(To, "MailEase") },
+            Subject = _subject,
+            From = _from,
+            ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Body = "<h1>Hello</h1>"
         };
 
@@ -48,9 +57,9 @@ public sealed class InfobipTests
     {
         var request = new InfobipMessage
         {
-            Subject = Subject,
-            From = From,
-            ToAddresses = new List<EmailAddress> { new(To, "MailEase") },
+            Subject = _subject,
+            From = _from,
+            ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Body = "<h1>Hello</h1>",
             SendAt = DateTimeOffset.UtcNow.AddDays(30).AddSeconds(1)
         };
@@ -60,6 +69,6 @@ public sealed class InfobipTests
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.InvalidSendAt));
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidSendAt));
     }
 }

@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using MailEase.Exceptions;
-using MailEase.Providers.SendGrid;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Extensions.Http;
@@ -63,65 +62,28 @@ public abstract class BaseEmailProvider<TRequest> : IEmailProvider<TRequest>
         var mailEaseException = new MailEaseException();
 
         if (!request.From.IsValid)
-            mailEaseException.AddError(
-                new MailEaseErrorDetail(
-                    "From address cannot be empty.",
-                    MailEaseErrorCode.InvalidFromAddress
-                )
-            );
+            mailEaseException.AddError(BaseEmailMessageErrors.InvalidFromAddress);
 
         if (string.IsNullOrWhiteSpace(request.Subject))
-            mailEaseException.AddError(
-                new MailEaseErrorDetail(
-                    "Subject cannot be empty.",
-                    MailEaseErrorCode.InvalidSubject
-                )
-            );
+            mailEaseException.AddError(BaseEmailMessageErrors.InvalidSubject);
 
         if (request.ToAddresses.Count <= 0)
-            mailEaseException.AddError(
-                new MailEaseErrorDetail(
-                    "To address cannot be empty.",
-                    MailEaseErrorCode.NoRecipients
-                )
-            );
+            mailEaseException.AddError(BaseEmailMessageErrors.NoRecipients);
 
         if (!request.ToAddresses.All(x => x.IsValid))
-            mailEaseException.AddError(
-                new MailEaseErrorDetail(
-                    "One or more invalid recipients.",
-                    MailEaseErrorCode.InvalidToRecipients
-                )
-            );
+            mailEaseException.AddError(BaseEmailMessageErrors.InvalidToRecipients);
 
         if (!request.CcAddresses.All(x => x.IsValid))
-            mailEaseException.AddError(
-                new MailEaseErrorDetail(
-                    "One or more invalid cc recipients.",
-                    MailEaseErrorCode.InvalidCcRecipients
-                )
-            );
+            mailEaseException.AddError(BaseEmailMessageErrors.InvalidCcRecipients);
 
         if (!request.BccAddresses.All(x => x.IsValid))
-            mailEaseException.AddError(
-                new MailEaseErrorDetail(
-                    "One or more invalid bcc recipients.",
-                    MailEaseErrorCode.InvalidBccRecipients
-                )
-            );
+            mailEaseException.AddError(BaseEmailMessageErrors.InvalidBccRecipients);
 
         if (!request.ReplyToAddresses.All(x => x.IsValid))
-            mailEaseException.AddError(
-                new MailEaseErrorDetail(
-                    "One or more invalid reply-to recipients.",
-                    MailEaseErrorCode.InvalidReplyToRecipients
-                )
-            );
+            mailEaseException.AddError(BaseEmailMessageErrors.InvalidReplyToRecipients);
 
         if (string.IsNullOrWhiteSpace(request.Body))
-            mailEaseException.AddError(
-                new MailEaseErrorDetail("Body cannot be empty.", MailEaseErrorCode.InvalidBody)
-            );
+            mailEaseException.AddError(BaseEmailMessageErrors.InvalidBody);
 
         mailEaseException.AddErrors(ProviderSpecificValidation(request).Errors);
 

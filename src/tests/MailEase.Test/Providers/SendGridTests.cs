@@ -7,20 +7,28 @@ public sealed class SendGridTests
 {
     private readonly IEmailProvider<SendGridMessage> _emailProvider;
     private readonly ITestOutputHelper _testOutputHelper;
+    private readonly string _subject = "MailEase";
+    private readonly string _from;
+    private readonly string _to;
 
     public SendGridTests(ITestOutputHelper testOutputHelper)
     {
         _testOutputHelper = testOutputHelper;
 
         var apiKey =
-            Environment.GetEnvironmentVariable("SENDGRID_API_KEY") ?? "YOUR_SENDGRID_API_KEY";
+            Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
+            ?? throw new InvalidOperationException("SendGrid API key cannot be empty.");
+
+        _subject = Environment.GetEnvironmentVariable("SENDGRID_SUBJECT") ?? _subject;
+        _from =
+            Environment.GetEnvironmentVariable("SENDGRID_FROM")
+            ?? throw new InvalidOperationException("FROM cannot be empty.");
+        _to =
+            Environment.GetEnvironmentVariable("SENDGRID_TO")
+            ?? throw new InvalidOperationException("TO cannot be empty.");
 
         _emailProvider = Emails.SendGrid(new SendGridParams(apiKey));
     }
-
-    public const string Subject = "MailEase";
-    public const string From = "YOUR_FROM_EMAIL_HERE";
-    public const string To = "YOUR_TO_EMAIL_HERE";
 
     [Fact]
     public void SendEmailWithEmptyApiKeyShouldThrow()
@@ -34,9 +42,9 @@ public sealed class SendGridTests
     {
         var request = new SendGridMessage
         {
-            Subject = Subject,
-            From = From,
-            ToAddresses = new List<EmailAddress> { new(To, "MailEase") },
+            Subject = _subject,
+            From = _from,
+            ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Body = "<h1>Hello</h1>",
             SandBoxMode = true
         };
@@ -49,9 +57,9 @@ public sealed class SendGridTests
     {
         var request = new SendGridMessage
         {
-            Subject = Subject,
-            From = From,
-            ToAddresses = new List<EmailAddress> { new(To, "MailEase") },
+            Subject = _subject,
+            From = _from,
+            ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Body = "<h1>Hello</h1>",
             SendAt = DateTimeOffset.UtcNow.AddHours(72).AddSeconds(1)
         };
@@ -61,6 +69,6 @@ public sealed class SendGridTests
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(x => x.Errors.Any(y => y.ErrorCode == MailEaseErrorCode.InvalidSendAt));
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidSendAt));
     }
 }

@@ -1,5 +1,19 @@
 namespace MailEase;
 
+public interface IEmailMessage
+{
+    string Subject { get; init; }
+    EmailAddress From { get; init; }
+    List<EmailAddress> ToAddresses { get; init; }
+    List<EmailAddress> CcAddresses { get; init; }
+    List<EmailAddress> BccAddresses { get; init; }
+    List<EmailAddress> ReplyToAddresses { get; init; }
+    string Body { get; init; }
+    bool IsHtmlBody { get; init; }
+    string? TemplateId { get; init; }
+    DateTimeOffset? SendAt { get; init; }
+}
+
 public abstract record BaseEmailMessage : IEmailMessage
 {
     public required string Subject { get; init; }
@@ -9,11 +23,7 @@ public abstract record BaseEmailMessage : IEmailMessage
     public List<EmailAddress> BccAddresses { get; init; } = new();
     public List<EmailAddress> ReplyToAddresses { get; init; } = new();
     public required string Body { get; init; }
-    public string? PlainTextBody { get; init; }
     public bool IsHtmlBody { get; init; }
-    public Dictionary<string, string> Headers { get; init; } = new();
-
-    public bool SandBoxMode { get; init; }
 
     public string? TemplateId { get; init; }
 

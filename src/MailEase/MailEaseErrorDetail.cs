@@ -1,6 +1,6 @@
 namespace MailEase;
 
-public sealed record MailEaseErrorDetail(string Message, MailEaseErrorCode ErrorCode);
+public sealed record MailEaseErrorDetail(MailEaseErrorCode Code, string Description);
 
 public enum MailEaseErrorCode
 {
