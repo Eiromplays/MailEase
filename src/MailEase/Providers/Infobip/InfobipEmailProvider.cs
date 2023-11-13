@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text.Json;
 using MailEase.Exceptions;
 
@@ -9,8 +10,7 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
         : base(
             new Uri(infobipParams.BaseAddress, infobipParams.Path),
             new StaticAuthHandler(new AppToken(infobipParams.ApiKey))
-        )
-    { }
+        ) { }
 
     public override async Task SendEmailAsync(
         InfobipMessage message,
@@ -74,6 +74,20 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
             new StringContent(message.Body),
             message.IsHtmlBody ? "html" : "text"
         );
+
+        if (message.Attachments.Count > 0)
+            foreach (var attachment in message.Attachments)
+            {
+                var attachmentStreamContent = new StreamContent(attachment.Content);
+                if (MediaTypeHeaderValue.TryParse(attachment.ContentType, out var mediaTypeHeaderValue))
+                    attachmentStreamContent.Headers.ContentType = mediaTypeHeaderValue;
+
+                multipartFormDataContent.Add(
+                    attachmentStreamContent,
+                    attachment.IsInline ? "inlineImage" : "attachment",
+                    attachment.FileName
+                );
+            }
 
         if (!string.IsNullOrWhiteSpace(message.TemplateId))
             multipartFormDataContent.Add(new StringContent(message.TemplateId), "templateId");

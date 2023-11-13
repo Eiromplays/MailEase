@@ -1,4 +1,5 @@
 using MailEase.Exceptions;
+using MailEase.Helpers;
 
 namespace MailEase.Providers.SendGrid;
 
@@ -23,7 +24,7 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
         ValidateEmailMessage(message); // Performs some common validations
 
         var (_, error) = await PostJsonAsync<object, SendGridErrorResponse>(
-            MapToProviderRequest(message)
+            await MapToProviderRequestAsync(message)
         );
 
         if (error is not null)
@@ -43,7 +44,7 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
         return mailEaseException;
     }
 
-    private SendGridRequest MapToProviderRequest(SendGridMessage message)
+    private async Task<SendGridRequest> MapToProviderRequestAsync(SendGridMessage message)
     {
         var content = new List<SendGridContent>();
         if (message.IsHtmlBody)
@@ -58,7 +59,7 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
         else
             content.Add(new SendGridContent { Type = "text/plain", Value = message.Body });
 
-        return new SendGridRequest
+        var request = new SendGridRequest
         {
             From = message.From,
             Personalizations = new List<SendGridPersonalization>
@@ -67,9 +68,24 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
                 {
                     To = message.ToAddresses
                         .Select(e => new SendGridEmailAddress(e.Address, e.Name))
-                        .ToList()
+                        .ToList(),
+                    Cc =
+                        message.CcAddresses.Count > 0
+                            ? message.CcAddresses
+                                .Select(e => new SendGridEmailAddress(e.Address, e.Name))
+                                .ToList()
+                            : null,
+                    Bcc =
+                        message.BccAddresses.Count > 0
+                            ? message.BccAddresses
+                                .Select(e => new SendGridEmailAddress(e.Address, e.Name))
+                                .ToList()
+                            : null,
                 }
             },
+            ReplyToList = message.ReplyToAddresses
+                .Select(e => new SendGridEmailAddress(e.Address, e.Name))
+                .ToList(),
             Subject = message.Subject,
             Content = content,
             Headers = message.Headers,
@@ -80,6 +96,23 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
             TemplateId = message.TemplateId,
             SendAt = message.SendAt?.ToUnixTimeSeconds()
         };
+
+        foreach (var attachment in message.Attachments)
+        {
+            (request.Attachments ?? new List<SendGridAttachment>()).Add(
+                new SendGridAttachment
+                {
+                    // Base 64 encoded content
+                    Content = await StreamHelpers.StreamToBase64Async(attachment.Content),
+                    Type = attachment.ContentType,
+                    Filename = attachment.FileName,
+                    Disposition = attachment.IsInline ? "inline" : "attachment",
+                    ContentId = attachment.ContentId
+                }
+            );
+        }
+
+        return request;
     }
 
     private MailEaseException ConvertProviderErrorResponseToGenericError(

@@ -10,6 +10,7 @@ public interface IEmailMessage
     List<EmailAddress> ReplyToAddresses { get; init; }
     string Body { get; init; }
     bool IsHtmlBody { get; init; }
+    List<EmailAttachment> Attachments { get; init; }
     string? TemplateId { get; init; }
     DateTimeOffset? SendAt { get; init; }
 }
@@ -24,6 +25,8 @@ public abstract record BaseEmailMessage : IEmailMessage
     public List<EmailAddress> ReplyToAddresses { get; init; } = new();
     public required string Body { get; init; }
     public bool IsHtmlBody { get; init; }
+
+    public List<EmailAttachment> Attachments { get; init; } = new();
 
     public string? TemplateId { get; init; }
 

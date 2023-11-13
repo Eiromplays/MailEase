@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace MailEase;
 
 public record EmailAddress(string Address, string? Name = null)
