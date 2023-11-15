@@ -15,7 +15,7 @@ public sealed class AzureCommunicationEmailTests
     public AzureCommunicationEmailTests(ITestOutputHelper testOutputHelper)
     {
         var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", true)
+            .AddJsonFile("appsettings.Development.json", true)
             .AddEnvironmentVariables()
             .Build();
 
@@ -35,13 +35,16 @@ public sealed class AzureCommunicationEmailTests
             config.GetValue<string>("AZURE_COMMUNICATION_EMAIL_TO")
             ?? throw new InvalidOperationException("TO cannot be empty.");
 
-        _emailProvider = Emails.AzureEmailCommunicationService(new AzureCommunicationParams(connectionString));
+        _emailProvider = Emails.AzureEmailCommunicationService(
+            new AzureCommunicationParams(connectionString)
+        );
     }
 
     [Fact]
     public void SendEmailWithEmptyApiKeyShouldThrow()
     {
-        var azureCommunicationParamsFunc = () => Emails.AzureEmailCommunicationService(new AzureCommunicationParams(""));
+        var azureCommunicationParamsFunc = () =>
+            Emails.AzureEmailCommunicationService(new AzureCommunicationParams(""));
         azureCommunicationParamsFunc
             .Should()
             .Throw<ArgumentNullException>("Connection string cannot be empty.");

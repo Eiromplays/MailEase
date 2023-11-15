@@ -13,7 +13,7 @@ public sealed class InfobipTests
     public InfobipTests()
     {
         var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", true)
+            .AddJsonFile("appsettings.Development.json", true)
             .AddEnvironmentVariables()
             .Build();
 

@@ -15,7 +15,7 @@ public sealed class SendGridTests
     public SendGridTests(ITestOutputHelper testOutputHelper)
     {
         var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", true)
+            .AddJsonFile("appsettings.Development.json", true)
             .AddEnvironmentVariables()
             .Build();
 
