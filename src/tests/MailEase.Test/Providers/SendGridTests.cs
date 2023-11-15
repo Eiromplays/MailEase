@@ -1,4 +1,5 @@
 using MailEase.Providers.SendGrid;
+using Microsoft.Extensions.Configuration;
 using Xunit.Abstractions;
 
 namespace MailEase.Test.Providers;
@@ -13,18 +14,23 @@ public sealed class SendGridTests
 
     public SendGridTests(ITestOutputHelper testOutputHelper)
     {
+        var config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", true)
+            .AddEnvironmentVariables()
+            .Build();
+
         _testOutputHelper = testOutputHelper;
 
         var apiKey =
-            Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
+            config.GetValue<string>("SENDGRID_API_KEY")
             ?? throw new InvalidOperationException("SendGrid API key cannot be empty.");
 
-        _subject = Environment.GetEnvironmentVariable("SENDGRID_SUBJECT") ?? _subject;
+        _subject = config.GetValue<string>("SENDGRID_SUBJECT") ?? _subject;
         _from =
-            Environment.GetEnvironmentVariable("SENDGRID_FROM")
+            config.GetValue<string>("SENDGRID_FROM")
             ?? throw new InvalidOperationException("FROM cannot be empty.");
         _to =
-            Environment.GetEnvironmentVariable("SENDGRID_TO")
+            config.GetValue<string>("SENDGRID_TO")
             ?? throw new InvalidOperationException("TO cannot be empty.");
 
         _emailProvider = Emails.SendGrid(new SendGridParams(apiKey));

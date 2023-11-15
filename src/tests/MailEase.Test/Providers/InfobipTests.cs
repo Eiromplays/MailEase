@@ -1,4 +1,5 @@
 using MailEase.Providers.Infobip;
+using Microsoft.Extensions.Configuration;
 
 namespace MailEase.Test.Providers;
 
@@ -11,20 +12,25 @@ public sealed class InfobipTests
 
     public InfobipTests()
     {
+        var config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", true)
+            .AddEnvironmentVariables()
+            .Build();
+
         var apiKey =
-            Environment.GetEnvironmentVariable("INFOBIP_API_KEY")
+            config.GetValue<string>("INFOBIP_API_KEY")
             ?? throw new InvalidOperationException("Infobip API key cannot be empty.");
         var baseAddress = new Uri(
-            Environment.GetEnvironmentVariable("INFOBIP_BASE_URL")
+            config.GetValue<string>("INFOBIP_BASE_URL")
                 ?? throw new InvalidOperationException("Infobip base URL cannot be empty.")
         );
 
-        _subject = Environment.GetEnvironmentVariable("INFOBIP_SUBJECT") ?? _subject;
+        _subject = config.GetValue<string>("INFOBIP_SUBJECT") ?? _subject;
         _from =
-            Environment.GetEnvironmentVariable("INFOBIP_FROM")
+            config.GetValue<string>("INFOBIP_FROM")
             ?? throw new InvalidOperationException("FROM cannot be empty.");
         _to =
-            Environment.GetEnvironmentVariable("INFOBIP_TO")
+            config.GetValue<string>("INFOBIP_TO")
             ?? throw new InvalidOperationException("TO cannot be empty.");
 
         _emailProvider = Emails.Infobip(new InfobipParams(apiKey, baseAddress));
