@@ -5,15 +5,12 @@ namespace MailEase.Providers.SendGrid;
 
 public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
 {
-    private readonly SendGridParams _sendGridParams;
-
     public SendGridEmailProvider(SendGridParams sendGridParams)
         : base(
             new Uri($"{sendGridParams.BaseAddress}/{sendGridParams.Version}/{sendGridParams.Path}"),
             new StaticAuthHandler(new BearerToken(sendGridParams.ApiKey))
         )
     {
-        _sendGridParams = sendGridParams;
     }
 
     public override async Task SendEmailAsync(

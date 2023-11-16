@@ -1,25 +1,21 @@
 using MailEase.Providers.Microsoft;
 using Microsoft.Extensions.Configuration;
-using Xunit.Abstractions;
 
 namespace MailEase.Test.Providers;
 
 public sealed class AzureCommunicationEmailTests
 {
     private readonly IEmailProvider<AzureCommunicationEmailMessage> _emailProvider;
-    private readonly ITestOutputHelper _testOutputHelper;
     private readonly string _subject = "MailEase";
     private readonly string _from;
     private readonly string _to;
 
-    public AzureCommunicationEmailTests(ITestOutputHelper testOutputHelper)
+    public AzureCommunicationEmailTests()
     {
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Development.json", true)
             .AddEnvironmentVariables()
             .Build();
-
-        _testOutputHelper = testOutputHelper;
 
         var connectionString =
             config.GetValue<string>("AZURE_COMMUNICATION_EMAIL_CONNECTION_STRING")

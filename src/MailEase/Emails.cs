@@ -1,4 +1,5 @@
 using MailEase.Providers.Infobip;
+using MailEase.Providers.Mailtrap;
 using MailEase.Providers.Microsoft;
 using MailEase.Providers.SendGrid;
 
@@ -15,4 +16,7 @@ public static class Emails
 
     public static IEmailProvider<InfobipMessage> Infobip(InfobipParams infobipParams) =>
         new InfobipEmailProvider(infobipParams);
+
+    public static IEmailProvider<MailtrapMessage> Mailtrap(MailtrapParams mailtrapParams) =>
+        new MailtrapEmailProvider(mailtrapParams);
 }

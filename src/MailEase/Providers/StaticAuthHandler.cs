@@ -2,19 +2,14 @@ using System.Net.Http.Headers;
 
 namespace MailEase.Providers;
 
-public interface IAuthToken
+public abstract record AuthToken(string Value)
 {
-    string Value { get; }
-    AuthenticationHeaderValue GetAuthenticationHeader();
+    public abstract AuthenticationHeaderValue GetAuthenticationHeader();
 }
 
-public readonly struct AppToken : IAuthToken
+public sealed record AppToken(string Value) : AuthToken(Value)
 {
-    public string Value { get; }
-
-    public AppToken(string value) => Value = value;
-
-    public AuthenticationHeaderValue GetAuthenticationHeader()
+    public override AuthenticationHeaderValue GetAuthenticationHeader()
     {
         if (string.IsNullOrWhiteSpace(Value))
             throw new ArgumentNullException(nameof(Value), "App token cannot be empty.");
@@ -22,13 +17,9 @@ public readonly struct AppToken : IAuthToken
     }
 }
 
-public readonly struct BearerToken : IAuthToken
+public sealed record BearerToken(string Value) : AuthToken(Value)
 {
-    public string Value { get; }
-
-    public BearerToken(string value) => Value = value;
-
-    public AuthenticationHeaderValue GetAuthenticationHeader()
+    public override AuthenticationHeaderValue GetAuthenticationHeader()
     {
         if (string.IsNullOrWhiteSpace(Value))
             throw new ArgumentNullException(nameof(Value), "Bearer token cannot be empty.");
@@ -40,7 +31,7 @@ public sealed class StaticAuthHandler : DelegatingHandler
 {
     private readonly AuthenticationHeaderValue _authenticationHeaderValue;
 
-    public StaticAuthHandler(IAuthToken authToken)
+    public StaticAuthHandler(AuthToken authToken)
         : base(new HttpClientHandler())
     {
         _authenticationHeaderValue = authToken.GetAuthenticationHeader();

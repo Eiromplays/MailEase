@@ -1,25 +1,21 @@
 using MailEase.Providers.SendGrid;
 using Microsoft.Extensions.Configuration;
-using Xunit.Abstractions;
 
 namespace MailEase.Test.Providers;
 
 public sealed class SendGridTests
 {
     private readonly IEmailProvider<SendGridMessage> _emailProvider;
-    private readonly ITestOutputHelper _testOutputHelper;
     private readonly string _subject = "MailEase";
     private readonly string _from;
     private readonly string _to;
 
-    public SendGridTests(ITestOutputHelper testOutputHelper)
+    public SendGridTests()
     {
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Development.json", true)
             .AddEnvironmentVariables()
             .Build();
-
-        _testOutputHelper = testOutputHelper;
 
         var apiKey =
             config.GetValue<string>("SENDGRID_API_KEY")
