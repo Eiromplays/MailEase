@@ -12,11 +12,8 @@ namespace MailEase.Providers.Amazon;
 /// </summary>
 internal static class AWSSDKUtils
 {
-    internal static Dictionary<int, string?> RFCEncodingSchemes = new Dictionary<int, string?>
-    {
-        { 3986, ValidUrlCharacters },
-        { 1738, ValidUrlCharactersRFC1738 }
-    };
+    private static readonly Dictionary<int, string?> RfcEncodingSchemes =
+        new() { { 3986, ValidUrlCharacters }, { 1738, ValidUrlCharactersRfc1738 } };
 
     /// <summary>
     /// The Set of accepted and valid Url characters per RFC3986.
@@ -29,7 +26,7 @@ internal static class AWSSDKUtils
     /// The Set of accepted and valid Url characters per RFC1738.
     /// Characters outside of this set will be encoded.
     /// </summary>
-    public const string ValidUrlCharactersRFC1738 =
+    private const string ValidUrlCharactersRfc1738 =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.";
 
     // Checks which path characters should not be encoded
@@ -40,9 +37,11 @@ internal static class AWSSDKUtils
         const string basePathCharacters = "/:'()!*[]$";
 
         var sb = new StringBuilder();
-        foreach (char c in basePathCharacters)
+        foreach (var c in basePathCharacters)
         {
-            string escaped = Uri.EscapeUriString(c.ToString());
+#pragma warning disable SYSLIB0013
+            var escaped = Uri.EscapeUriString(c.ToString());
+#pragma warning restore SYSLIB0013
             if (escaped.Length == 1 && escaped[0] == c)
                 sb.Append(c);
         }
@@ -71,7 +70,7 @@ internal static class AWSSDKUtils
     /// URL encodes a string per the specified RFC. If the path property is specified,
     /// the accepted path characters {/+:} are not encoded.
     /// </summary>
-    /// <param name="rfcNumber">RFC number determing safe characters</param>
+    /// <param name="rfcNumber">RFC number determining safe characters</param>
     /// <param name="data">The string to encode</param>
     /// <param name="path">Whether the string is a URL path or not</param>
     /// <returns>The encoded string</returns>
@@ -79,20 +78,16 @@ internal static class AWSSDKUtils
     /// Currently recognised RFC versions are 1738 (Dec '94) and 3986 (Jan '05).
     /// If the specified RFC is not recognised, 3986 is used by default.
     /// </remarks>
-    public static string UrlEncode(int rfcNumber, string data, bool path)
+    private static string UrlEncode(int rfcNumber, string data, bool path)
     {
-        StringBuilder encoded = new StringBuilder(data.Length * 2);
-        string? validUrlCharacters;
-        if (!RFCEncodingSchemes.TryGetValue(rfcNumber, out validUrlCharacters))
+        var encoded = new StringBuilder(data.Length * 2);
+        if (!RfcEncodingSchemes.TryGetValue(rfcNumber, out var validUrlCharacters))
             validUrlCharacters = ValidUrlCharacters;
 
-        string unreservedChars = String.Concat(
-            validUrlCharacters,
-            (path ? ValidPathCharacters : "")
-        );
+        var unreservedChars = string.Concat(validUrlCharacters, (path ? ValidPathCharacters : ""));
         foreach (char symbol in System.Text.Encoding.UTF8.GetBytes(data))
         {
-            if (unreservedChars.IndexOf(symbol) != -1)
+            if (unreservedChars.Contains(symbol))
             {
                 encoded.Append(symbol);
             }
@@ -102,9 +97,9 @@ internal static class AWSSDKUtils
 
                 // Break apart the byte into two four-bit components and
                 // then convert each into their hexadecimal equivalent.
-                byte b = (byte)symbol;
-                int hiNibble = b >> 4;
-                int loNibble = b & 0xF;
+                var b = (byte)symbol;
+                var hiNibble = b >> 4;
+                var loNibble = b & 0xF;
                 encoded.Append(ToUpperHex(hiNibble));
                 encoded.Append(ToUpperHex(loNibble));
             }

@@ -11,7 +11,8 @@ namespace MailEase.Providers.Amazon;
 internal class SesAuthHandler : DelegatingHandler
 {
     private const string DateHeaderName = "x-amz-date";
-    private const string AwsAuthorizationHeaderName = "AWS4-HMAC-SHA256";
+    private const string AwsAuthorizationSchemeName = "AWS4-HMAC-SHA256";
+    private const string AwsContentSha256HeaderName = "x-amz-content-sha256";
 
     private readonly string _accessKeyId;
     private readonly string _secretAccessKey;
@@ -60,11 +61,11 @@ internal class SesAuthHandler : DelegatingHandler
     {
         // a very helpful article on S3 auth: https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
 
-        DateTimeOffset dateToUse = signDate ?? DateTimeOffset.UtcNow;
-        string nowDate = dateToUse.ToString("yyyyMMdd");
-        string amzNowDate = GetAmzDate(dateToUse);
+        var dateToUse = signDate ?? DateTimeOffset.UtcNow;
+        var nowDate = dateToUse.ToString("yyyyMMdd");
+        var amzNowDate = GetAmzDate(dateToUse);
 
-        request.Headers.Add("x-amz-date", amzNowDate);
+        request.Headers.Add(DateHeaderName, amzNowDate);
 
         // 1. Create a canonical request
 
@@ -77,9 +78,9 @@ internal class SesAuthHandler : DelegatingHandler
          * <HashedPayload>
          */
 
-        string payloadHash = await AddPayloadHashHeader(request);
+        var payloadHash = await AddPayloadHashHeader(request);
 
-        string canonicalRequest =
+        var canonicalRequest =
             request.Method
             + "\n"
             + GetCanonicalUri(request)
@@ -87,7 +88,7 @@ internal class SesAuthHandler : DelegatingHandler
             + // CanonicalURI
             GetCanonicalQueryString(request)
             + "\n"
-            + GetCanonicalHeaders(request, out string signedHeaders)
+            + GetCanonicalHeaders(request, out var signedHeaders)
             + "\n"
             + // ends up with two newlines which is expected
             signedHeaders
@@ -106,8 +107,8 @@ internal class SesAuthHandler : DelegatingHandler
          *    HashedCanonicalRequest
          */
 
-        string stringToSign =
-            "AWS4-HMAC-SHA256\n"
+        var stringToSign =
+            $"{AwsAuthorizationSchemeName}\n"
             + amzNowDate
             + "\n"
             + nowDate
@@ -127,36 +128,35 @@ internal class SesAuthHandler : DelegatingHandler
          * SigningKey           = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
          */
 
-        byte[] kSecret = Encoding.UTF8.GetBytes(("AWS4" + _secretAccessKey).ToCharArray());
-        byte[] kDate = HmacSha256(nowDate, kSecret);
-        byte[] kRegion = HmacSha256(_region, kDate);
-        byte[] kService = HmacSha256(_service, kRegion);
-        byte[] kSigning = HmacSha256("aws4_request", kService);
+        var kSecret = Encoding.UTF8.GetBytes(("AWS4" + _secretAccessKey).ToCharArray());
+        var kDate = HmacSha256(nowDate, kSecret);
+        var kRegion = HmacSha256(_region, kDate);
+        var kService = HmacSha256(_service, kRegion);
+        var kSigning = HmacSha256("aws4_request", kService);
 
         // final signature
-        byte[] signatureRaw = HmacSha256(stringToSign, kSigning);
-        string signature = signatureRaw.ToHexString()!;
+        var signatureRaw = HmacSha256(stringToSign, kSigning);
+        var signature = signatureRaw.ToHexString()!;
 
-        string auth =
+        var auth =
             $"Credential={_accessKeyId}/{nowDate}/{_region}/{_service}/aws4_request,SignedHeaders={signedHeaders},Signature={signature}";
-        request.Headers.Authorization = new AuthenticationHeaderValue("AWS4-HMAC-SHA256", auth);
+        request.Headers.Authorization = new AuthenticationHeaderValue(
+            AwsAuthorizationSchemeName,
+            auth
+        );
 
         return signature;
     }
 
-    private static string GetAmzDate(DateTimeOffset date)
-    {
-        return date.ToString("yyyyMMddTHHmmssZ");
-    }
+    private static string GetAmzDate(DateTimeOffset date) => date.ToString("yyyyMMddTHHmmssZ");
 
     private static string GetCanonicalUri(HttpRequestMessage request)
     {
-        string path = request.RequestUri!.GetAbsolutePathUnencoded();
+        var path = request.RequestUri!.GetAbsolutePathUnencoded();
         return AWSSDKUtils.UrlEncode(path, true);
     }
 
-    ///
-    private string GetCanonicalQueryString(HttpRequestMessage request)
+    private static string GetCanonicalQueryString(HttpRequestMessage request)
     {
         // CanonicalQueryString specifies the URI-encoded query string parameters. You URI-encode name and values individually. You must also sort the parameters in the canonical query string alphabetically by key name. The sorting occurs after encoding.
 
@@ -174,22 +174,22 @@ internal class SesAuthHandler : DelegatingHandler
 
             // URI-encode each parameter name and value.
             // This is a special encoding specific to AWS, not the standard URI encoding.
-            string value = AWSSDKUtils.UrlEncode(values[key]!, false);
+            var value = AWSSDKUtils.UrlEncode(values[key]!, false);
 
-            if (key == null)
+            if (key is null)
             {
-                sb.Append(value).Append("=");
+                sb.Append(value).Append('=');
             }
             else
             {
-                sb.Append(AWSSDKUtils.UrlEncode(key, false)).Append("=").Append(value);
+                sb.Append(AWSSDKUtils.UrlEncode(key, false)).Append('=').Append(value);
             }
         }
 
         return sb.ToString();
     }
 
-    private string GetCanonicalHeaders(HttpRequestMessage request, out string signedHeaders)
+    private static string GetCanonicalHeaders(HttpRequestMessage request, out string signedHeaders)
     {
         // List of request headers with their values.
         // Individual header name and value pairs are separated by the newline character ("\n").
@@ -212,24 +212,24 @@ internal class SesAuthHandler : DelegatingHandler
         // - Any x-amz-* headers that you plan to include in your request must also be added. For example, if you are using temporary security credentials, you need to include x-amz-security-token in your request. You must add this header in the list of CanonicalHeaders.
 
         var contentType = request.Content?.Headers.ContentType?.ToString();
-        if (contentType != null)
+        if (contentType is not null)
         {
-            sb.Append("content-type:").Append(contentType).Append("\n");
+            sb.Append("content-type:").Append(contentType).Append('\n');
             signedHeadersList.Add("content-type");
         }
 
         if (request.Headers.Contains("date"))
         {
-            sb.Append("date:").Append(request.Headers.GetValues("date").First()).Append("\n");
+            sb.Append("date:").Append(request.Headers.GetValues("date").First()).Append('\n');
             signedHeadersList.Add("date");
         }
 
-        sb.Append("host:").Append(request.RequestUri?.Authority).Append("\n");
+        sb.Append("host:").Append(request.RequestUri?.Authority).Append('\n');
         signedHeadersList.Add("host");
 
         if (request.Headers.Contains("range"))
         {
-            sb.Append("range:").Append(request.Headers.GetValues("range").First()).Append("\n");
+            sb.Append("range:").Append(request.Headers.GetValues("range").First()).Append('\n');
             signedHeadersList.Add("range");
         }
 
@@ -237,15 +237,15 @@ internal class SesAuthHandler : DelegatingHandler
         //   it means put in a standard format. http://en.wikipedia.org/wiki/Canonicalization
         foreach (var kvp in headers)
         {
-            sb.Append(kvp.Key).Append(":");
+            sb.Append(kvp.Key).Append(':');
             signedHeadersList.Add(kvp.Key);
 
-            foreach (string hv in kvp.Value)
+            foreach (var hv in kvp.Value)
             {
                 sb.Append(hv);
             }
 
-            sb.Append("\n");
+            sb.Append('\n');
         }
 
         signedHeaders = string.Join(";", signedHeadersList);
@@ -258,13 +258,13 @@ internal class SesAuthHandler : DelegatingHandler
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    private async Task<string> AddPayloadHashHeader(HttpRequestMessage request)
+    private static async Task<string> AddPayloadHashHeader(HttpRequestMessage request)
     {
         string hash;
 
-        if (request.Content != null)
+        if (request.Content is not null)
         {
-            byte[] content = await request.Content.ReadAsByteArrayAsync();
+            var content = await request.Content.ReadAsByteArrayAsync();
             hash = content.SHA256().ToHexString()!;
         }
         else
@@ -272,19 +272,18 @@ internal class SesAuthHandler : DelegatingHandler
             hash = EmptySha256;
         }
 
-        request.Headers.Add("x-amz-content-sha256", hash);
+        request.Headers.Add(AwsContentSha256HeaderName, hash);
 
         return hash;
     }
 
     private static byte[] HmacSha256(string data, byte[] key)
     {
-        var alg = KeyedHashAlgorithm.Create("HmacSHA256");
-        if (alg == null)
+        var alg = new HMACSHA256(key);
+        if (alg is null)
         {
             throw new InvalidOperationException("HmacSHA256 could not be instantiated");
         }
-        alg.Key = key;
         return alg.ComputeHash(Encoding.UTF8.GetBytes(data));
     }
 }
