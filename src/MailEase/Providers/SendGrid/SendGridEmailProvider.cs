@@ -1,5 +1,5 @@
 using MailEase.Exceptions;
-using MailEase.Helpers;
+using MailEase.Utils;
 
 namespace MailEase.Providers.SendGrid;
 
@@ -9,9 +9,7 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
         : base(
             new Uri($"{sendGridParams.BaseAddress}/{sendGridParams.Version}/{sendGridParams.Path}"),
             new StaticAuthHandler(new BearerToken(sendGridParams.ApiKey))
-        )
-    {
-    }
+        ) { }
 
     public override async Task SendEmailAsync(
         SendGridMessage message,
@@ -90,13 +88,16 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
             {
                 SandBoxMode = new SendGridSandBoxMode { Enable = message.SandBoxMode }
             },
-            TemplateId = message.TemplateId,
+            TemplateId = message.Template,
             SendAt = message.SendAt?.ToUnixTimeSeconds()
         };
 
+        if (message.Attachments.Count > 0)
+            request.Attachments = new List<SendGridAttachment>();
+
         foreach (var attachment in message.Attachments)
         {
-            (request.Attachments ?? new List<SendGridAttachment>()).Add(
+            request.Attachments!.Add(
                 new SendGridAttachment
                 {
                     // Base 64 encoded content

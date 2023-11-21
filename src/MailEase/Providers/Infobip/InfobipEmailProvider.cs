@@ -54,19 +54,19 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
 
         foreach (var toAddress in message.ToAddresses)
             multipartFormDataContent.Add(
-                new StringContent($"{toAddress.Name} <{toAddress.Address}>"),
+                new StringContent(toAddress),
                 "to"
             );
 
         foreach (var ccAddress in message.CcAddresses)
             multipartFormDataContent.Add(
-                new StringContent($"{ccAddress.Name} <{ccAddress.Address}>"),
+                new StringContent(ccAddress),
                 "cc"
             );
 
         foreach (var bccAddress in message.BccAddresses)
             multipartFormDataContent.Add(
-                new StringContent($"{bccAddress.Name} <{bccAddress.Address}>"),
+                new StringContent(bccAddress),
                 "bcc"
             );
 
@@ -75,22 +75,21 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
             message.IsHtmlBody ? "html" : "text"
         );
 
-        if (message.Attachments.Count > 0)
-            foreach (var attachment in message.Attachments)
-            {
-                var attachmentStreamContent = new StreamContent(attachment.Content);
-                if (MediaTypeHeaderValue.TryParse(attachment.ContentType, out var mediaTypeHeaderValue))
-                    attachmentStreamContent.Headers.ContentType = mediaTypeHeaderValue;
+        foreach (var attachment in message.Attachments)
+        {
+            var attachmentStreamContent = new StreamContent(attachment.Content);
+            if (MediaTypeHeaderValue.TryParse(attachment.ContentType, out var mediaTypeHeaderValue))
+                attachmentStreamContent.Headers.ContentType = mediaTypeHeaderValue;
 
-                multipartFormDataContent.Add(
-                    attachmentStreamContent,
-                    attachment.IsInline ? "inlineImage" : "attachment",
-                    attachment.FileName
-                );
-            }
+            multipartFormDataContent.Add(
+                attachmentStreamContent,
+                attachment.IsInline ? "inlineImage" : "attachment",
+                attachment.FileName
+            );
+        }
 
-        if (!string.IsNullOrWhiteSpace(message.TemplateId))
-            multipartFormDataContent.Add(new StringContent(message.TemplateId), "templateId");
+        if (!string.IsNullOrWhiteSpace(message.Template))
+            multipartFormDataContent.Add(new StringContent(message.Template), "templateId");
 
         if (message.ReplyToAddresses.Count > 0)
             multipartFormDataContent.Add(

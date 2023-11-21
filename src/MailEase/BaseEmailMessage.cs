@@ -11,7 +11,7 @@ public interface IEmailMessage
     string Body { get; init; }
     bool IsHtmlBody { get; init; }
     List<EmailAttachment> Attachments { get; init; }
-    string? TemplateId { get; init; }
+    string? Template { get; init; }
     DateTimeOffset? SendAt { get; init; }
 }
 
@@ -28,7 +28,7 @@ public abstract record BaseEmailMessage : IEmailMessage
 
     public List<EmailAttachment> Attachments { get; init; } = new();
 
-    public string? TemplateId { get; init; }
+    public string? Template { get; init; }
 
     public DateTimeOffset? SendAt { get; init; }
 }

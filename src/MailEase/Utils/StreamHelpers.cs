@@ -1,4 +1,4 @@
-namespace MailEase.Helpers;
+namespace MailEase.Utils;
 
 public static class StreamHelpers
 {

@@ -1,3 +1,4 @@
+using MailEase.Providers.Amazon;
 using MailEase.Providers.Infobip;
 using MailEase.Providers.Mailtrap;
 using MailEase.Providers.Microsoft;
@@ -10,6 +11,9 @@ public static class Emails
     public static IEmailProvider<AzureCommunicationEmailMessage> AzureEmailCommunicationService(
         AzureCommunicationParams azureCommunicationParams
     ) => new AzureCommunicationEmailProvider(azureCommunicationParams);
+
+    public static IEmailProvider<AmazonSesMessage> AmazonSes(AmazonSesParams amazonSesParams) =>
+        new AmazonSesEmailProvider(amazonSesParams);
 
     public static IEmailProvider<SendGridMessage> SendGrid(SendGridParams sendGridParams) =>
         new SendGridEmailProvider(sendGridParams);

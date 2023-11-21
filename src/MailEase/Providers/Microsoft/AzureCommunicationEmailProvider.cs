@@ -1,6 +1,6 @@
 using System.Text.Json;
 using MailEase.Exceptions;
-using MailEase.Helpers;
+using MailEase.Utils;
 
 namespace MailEase.Providers.Microsoft;
 

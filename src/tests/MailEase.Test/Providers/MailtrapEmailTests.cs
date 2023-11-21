@@ -1,3 +1,4 @@
+using System.Text;
 using MailEase.Providers.Mailtrap;
 using Microsoft.Extensions.Configuration;
 
@@ -47,6 +48,28 @@ public sealed class MailtrapEmailTests
             Subject = _subject,
             From = new EmailAddress(_from, "MailEase"),
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
+            Body = "<h1>Hello</h1>",
+            IsHtmlBody = true
+        };
+
+        await _emailProvider.SendEmailAsync(request);
+    }
+
+    [Fact]
+    public async Task SendEmailWithAttachment()
+    {
+        var attachment = new EmailAttachment(
+            "MyVerySecretAttachment.txt",
+            new MemoryStream(Encoding.UTF8.GetBytes("Hello World!")),
+            "text/plain"
+        );
+
+        var request = new MailtrapMessage
+        {
+            Subject = _subject,
+            From = _from,
+            ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
+            Attachments = new List<EmailAttachment> { attachment },
             Body = "<h1>Hello</h1>",
             IsHtmlBody = true
         };

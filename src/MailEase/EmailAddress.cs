@@ -3,7 +3,7 @@ namespace MailEase;
 public record EmailAddress(string Address, string? Name = null)
 {
     public override string ToString() =>
-        string.IsNullOrWhiteSpace(Name) ? Address : $"{Address} <{Name}>";
+        string.IsNullOrWhiteSpace(Name) ? Address : $"{Name} <{Address}>";
 
     public static implicit operator string(EmailAddress address) => address.ToString();
 

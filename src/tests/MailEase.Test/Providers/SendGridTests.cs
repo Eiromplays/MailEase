@@ -1,3 +1,4 @@
+using System.Text;
 using MailEase.Providers.SendGrid;
 using Microsoft.Extensions.Configuration;
 
@@ -49,6 +50,28 @@ public sealed class SendGridTests
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Body = "<h1>Hello</h1>",
             SandBoxMode = true
+        };
+
+        await _emailProvider.SendEmailAsync(request);
+    }
+
+    [Fact]
+    public async Task SendEmailWithAttachment()
+    {
+        var attachment = new EmailAttachment(
+            "MyVerySecretAttachment.txt",
+            new MemoryStream(Encoding.UTF8.GetBytes("Hello World!")),
+            "text/plain"
+        );
+
+        var request = new SendGridMessage
+        {
+            Subject = _subject,
+            From = _from,
+            ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
+            Attachments = new List<EmailAttachment> { attachment },
+            Body = "<h1>Hello</h1>",
+            IsHtmlBody = true
         };
 
         await _emailProvider.SendEmailAsync(request);

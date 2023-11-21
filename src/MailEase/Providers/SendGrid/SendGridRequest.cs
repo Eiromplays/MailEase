@@ -20,7 +20,7 @@ public sealed class SendGridRequest
     public required List<SendGridContent> Content { get; init; } = new();
 
     [JsonPropertyName("attachments")]
-    public List<SendGridAttachment>? Attachments { get; init; }
+    public List<SendGridAttachment>? Attachments { get; internal set; }
 
     [JsonPropertyName("template_id")]
     public string? TemplateId { get; init; }

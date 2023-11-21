@@ -201,6 +201,11 @@ internal sealed class ConnectionString
         bool allowEmptyValues
     )
     {
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("Connection string cannot be empty.");
+        }
+
         var segmentStart = -1;
         var segmentEnd = 0;
 

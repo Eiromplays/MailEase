@@ -1,5 +1,5 @@
 using MailEase.Exceptions;
-using MailEase.Helpers;
+using MailEase.Utils;
 
 namespace MailEase.Providers.Mailtrap;
 
