@@ -6,5 +6,7 @@ public sealed record SendGridMessage : BaseEmailMessage
 
     public Dictionary<string, string> Headers { get; init; } = new();
 
+    public string? Template { get; init; }
+
     public bool SandBoxMode { get; init; }
 }

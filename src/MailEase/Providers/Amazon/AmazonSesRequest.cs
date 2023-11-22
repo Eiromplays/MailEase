@@ -26,11 +26,22 @@ public sealed class AmazonSesRequest
 public sealed class AmazonSesRequestContent
 {
     public required AmazonSesRequestContentRaw Raw { get; init; }
+
+    public AmazonSesRequestContentTemplate? Template { get; init; }
 }
 
 public sealed class AmazonSesRequestContentRaw
 {
     public required string Data { get; init; }
+}
+
+public sealed class AmazonSesRequestContentTemplate
+{
+    public string? TemplateArn { get; init; }
+
+    public string? TemplateData { get; init; }
+
+    public string? TemplateName { get; init; }
 }
 
 public sealed class AmazonSesRequestDestination

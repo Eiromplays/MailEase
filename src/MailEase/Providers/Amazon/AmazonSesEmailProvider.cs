@@ -76,12 +76,13 @@ public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
             Raw = new AmazonSesRequestContentRaw
             {
                 Data = Convert.ToBase64String(Encoding.UTF8.GetBytes(msg.ToString())),
-            }
+            },
+            Template = message.Template,
         };
 
         var request = new AmazonSesRequest
         {
-            //ConfigurationSetName = message.ConfigurationSetName,
+            ConfigurationSetName = message.ConfigurationSetName,
             Content = content,
             Destination = new AmazonSesRequestDestination
             {
@@ -89,13 +90,15 @@ public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
                 CcAddresses = message.CcAddresses.Select(e => e.ToString()).ToList(),
                 ToAddresses = message.ToAddresses.Select(e => e.ToString()).ToList(),
             },
-            //EmailTags = message.EmailTags,
-            //FeedbackForwardingEmailAddress = message.FeedbackForwardingEmailAddress,
-            /*FeedbackForwardingEmailAddressIdentityArn =
-                message.FeedbackForwardingEmailAddressIdentityArn,*/
+            EmailTags = message.EmailTags
+                .Select(x => new AmazonSesEmailTag { Name = x.Key, Value = x.Value })
+                .ToList(),
+            FeedbackForwardingEmailAddress = message.FeedbackForwardingEmailAddress,
+            FeedbackForwardingEmailAddressIdentityArn =
+                message.FeedbackForwardingEmailAddressIdentityArn,
             FromEmailAddress = message.From,
-            //FromEmailAddressIdentityArn = message.FromEmailAddressIdentityArn,
-            //ListManagementOptions = message.ListManagementOptions,
+            FromEmailAddressIdentityArn = message.FromEmailAddressIdentityArn,
+            ListManagementOptions = message.ListManagementOptions,
             ReplyToAddresses = message.ReplyToAddresses.Select(e => e.ToString()).ToList(),
         };
 
