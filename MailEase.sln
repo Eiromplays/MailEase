@@ -6,7 +6,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A95F4753
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailEase", "src\MailEase\MailEase.csproj", "{A44AD0B5-AA4D-48D6-9C95-91EBFF361B7D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailEase.Test", "src\tests\MailEase.Test\MailEase.Test.csproj", "{3652F303-A0AD-418B-B9FA-DF50FD23FFEF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailEase.Tests", "src\tests\MailEase.Tests\MailEase.Tests.csproj", "{3652F303-A0AD-418B-B9FA-DF50FD23FFEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

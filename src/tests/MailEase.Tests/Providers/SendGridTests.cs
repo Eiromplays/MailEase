@@ -2,21 +2,18 @@ using System.Text;
 using MailEase.Providers.SendGrid;
 using Microsoft.Extensions.Configuration;
 
-namespace MailEase.Test.Providers;
+namespace MailEase.Tests.Providers;
 
-public sealed class SendGridTests
+public sealed class SendGridTests : IClassFixture<ConfigurationFixture>
 {
     private readonly IEmailProvider<SendGridMessage> _emailProvider;
     private readonly string _subject = "MailEase";
     private readonly string _from;
     private readonly string _to;
 
-    public SendGridTests()
+    public SendGridTests(ConfigurationFixture fixture)
     {
-        var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json", true)
-            .AddEnvironmentVariables()
-            .Build();
+        var config = fixture.Config;
 
         var apiKey =
             config.GetValue<string>("SENDGRID_API_KEY")
@@ -34,14 +31,14 @@ public sealed class SendGridTests
     }
 
     [Fact]
-    public void SendEmailWithEmptyApiKeyShouldThrow()
+    public void SendEmail_WithEmptyApiKey_ShouldThrowArgumentNullException()
     {
         var sendGridParamsFunc = () => Emails.SendGrid(new SendGridParams(""));
         sendGridParamsFunc.Should().Throw<ArgumentNullException>("Bearer token cannot be empty.");
     }
 
     [Fact]
-    public async Task SendEmailWithSandboxMode()
+    public async Task SendEmail_WithSandboxMode_ShouldSucceed()
     {
         var request = new SendGridMessage
         {
@@ -56,7 +53,7 @@ public sealed class SendGridTests
     }
 
     [Fact]
-    public async Task SendEmailWithAttachment()
+    public async Task SendEmail_WithAttachment_ShouldSucceed()
     {
         var attachment = new EmailAttachment(
             "MyVerySecretAttachment.txt",
@@ -78,7 +75,7 @@ public sealed class SendGridTests
     }
 
     [Fact]
-    public async Task SendEmailWithInvalidSendAt()
+    public async Task SendEmail_WithInvalidSendAt_ShouldThrowMailEaseException()
     {
         var request = new SendGridMessage
         {

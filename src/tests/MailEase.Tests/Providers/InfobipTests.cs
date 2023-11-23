@@ -2,21 +2,18 @@ using System.Text;
 using MailEase.Providers.Infobip;
 using Microsoft.Extensions.Configuration;
 
-namespace MailEase.Test.Providers;
+namespace MailEase.Tests.Providers;
 
-public sealed class InfobipTests
+public sealed class InfobipTests : IClassFixture<ConfigurationFixture>
 {
     private readonly IEmailProvider<InfobipMessage> _emailProvider;
     private readonly string _subject = "MailEase";
     private readonly string _from;
     private readonly string _to;
 
-    public InfobipTests()
+    public InfobipTests(ConfigurationFixture fixture)
     {
-        var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json", true)
-            .AddEnvironmentVariables()
-            .Build();
+        var config = fixture.Config;
 
         var apiKey =
             config.GetValue<string>("INFOBIP_API_KEY")
@@ -38,7 +35,7 @@ public sealed class InfobipTests
     }
 
     [Fact]
-    public void SendEmailWithEmptyApiKeyShouldThrow()
+    public void SendEmail_WithEmptyApiKey_ShouldThrowArgumentNullException()
     {
         var sendGridParamsFunc = () =>
             Emails.Infobip(new InfobipParams("", new Uri("https://api.infobip.com/")));
@@ -46,7 +43,7 @@ public sealed class InfobipTests
     }
 
     [Fact]
-    public async Task SendEmail()
+    public async Task SendEmail_ShouldSucceed()
     {
         var request = new InfobipMessage
         {
@@ -61,7 +58,7 @@ public sealed class InfobipTests
     }
 
     [Fact]
-    public async Task SendEmailWithAttachment()
+    public async Task SendEmail_WithAttachment_ShouldSucceed()
     {
         var attachment = new EmailAttachment(
             "MyVerySecretAttachment.txt",
@@ -83,7 +80,7 @@ public sealed class InfobipTests
     }
 
     [Fact]
-    public async Task SendEmailWithInvalidSendAt()
+    public async Task SendEmail_WithInvalidSendAt_ShouldThrowMailEaseException()
     {
         var request = new InfobipMessage
         {

@@ -2,21 +2,18 @@ using System.Text;
 using MailEase.Providers.Amazon;
 using Microsoft.Extensions.Configuration;
 
-namespace MailEase.Test.Providers;
+namespace MailEase.Tests.Providers;
 
-public sealed class AmazonSesTests
+public sealed class AmazonSesTests : IClassFixture<ConfigurationFixture>
 {
     private readonly IEmailProvider<AmazonSesMessage> _emailProvider;
     private readonly string _subject = "MailEase";
     private readonly string _from;
     private readonly string _to;
 
-    public AmazonSesTests()
+    public AmazonSesTests(ConfigurationFixture fixture)
     {
-        var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json", true)
-            .AddEnvironmentVariables()
-            .Build();
+        var config = fixture.Config;
 
         var accessKeyId =
             config.GetValue<string>("AMAZON_SES_ACCESS_KEY_ID")
@@ -44,7 +41,32 @@ public sealed class AmazonSesTests
     }
 
     [Fact]
-    public async Task SendEmail()
+    public void SendEmail_WithEmptyAccessKeyId_ShouldThrowInvalidOperationException()
+    {
+        var amazonSesParamsFunc = () =>
+            Emails.AmazonSes(new AmazonSesParams("", "secret", "us-east-1"));
+        amazonSesParamsFunc.Should().Throw<ArgumentNullException>("Access key ID cannot be empty.");
+    }
+
+    [Fact]
+    public void SendEmail_WithEmptySecretAccessKey_ShouldThrowInvalidOperationException()
+    {
+        var amazonSesParamsFunc = () =>
+            Emails.AmazonSes(new AmazonSesParams("key", "", "us-east-1"));
+        amazonSesParamsFunc
+            .Should()
+            .Throw<ArgumentNullException>("Secret access key cannot be empty.");
+    }
+
+    [Fact]
+    public void SendEmail_WithEmptyRegion_ShouldThrowInvalidOperationException()
+    {
+        var amazonSesParamsFunc = () => Emails.AmazonSes(new AmazonSesParams("key", "secret", ""));
+        amazonSesParamsFunc.Should().Throw<ArgumentNullException>("Region cannot be empty.");
+    }
+
+    [Fact]
+    public Task SendEmail_ShouldSucceed()
     {
         var request = new AmazonSesMessage
         {
@@ -55,11 +77,11 @@ public sealed class AmazonSesTests
             IsHtmlBody = true
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 
     [Fact]
-    public async Task SendEmailWithAttachment()
+    public Task SendEmail_WithAttachment_ShouldSucceed()
     {
         var attachment = new EmailAttachment(
             "MyVerySecretAttachment.txt",
@@ -77,6 +99,6 @@ public sealed class AmazonSesTests
             IsHtmlBody = true
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 }

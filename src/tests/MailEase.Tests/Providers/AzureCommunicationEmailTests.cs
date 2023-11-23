@@ -1,22 +1,21 @@
 using System.Text;
 using MailEase.Providers.Microsoft;
 using Microsoft.Extensions.Configuration;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
-namespace MailEase.Test.Providers;
+namespace MailEase.Tests.Providers;
 
-public sealed class AzureCommunicationEmailTests
+public sealed class AzureCommunicationEmailTests : IClassFixture<ConfigurationFixture>
 {
     private readonly IEmailProvider<AzureCommunicationEmailMessage> _emailProvider;
     private readonly string _subject = "MailEase";
     private readonly string _from;
     private readonly string _to;
 
-    public AzureCommunicationEmailTests()
+    public AzureCommunicationEmailTests(ConfigurationFixture fixture)
     {
-        var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json", true)
-            .AddEnvironmentVariables()
-            .Build();
+        var config = fixture.Config;
 
         var connectionString =
             config.GetValue<string>("AZURE_COMMUNICATION_EMAIL_CONNECTION_STRING")
@@ -38,7 +37,7 @@ public sealed class AzureCommunicationEmailTests
     }
 
     [Fact]
-    public void SendEmailWithEmptyApiKeyShouldThrow()
+    public void SendEmail_WithEmptyConnectionString_ShouldThrowInvalidOperationException()
     {
         var azureCommunicationParamsFunc = () =>
             Emails.AzureEmailCommunicationService(new AzureCommunicationParams(""));
@@ -48,7 +47,7 @@ public sealed class AzureCommunicationEmailTests
     }
 
     [Fact]
-    public async Task SendEmail()
+    public Task SendEmail_ShouldSucceed()
     {
         var request = new AzureCommunicationEmailMessage
         {
@@ -59,11 +58,11 @@ public sealed class AzureCommunicationEmailTests
             IsHtmlBody = true
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 
     [Fact]
-    public async Task SendEmailWithAttachment()
+    public Task SendEmail_WithAttachment_ShouldSucceed()
     {
         var attachment = new EmailAttachment(
             "MyVerySecretAttachment.txt",
@@ -81,6 +80,6 @@ public sealed class AzureCommunicationEmailTests
             IsHtmlBody = true
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 }

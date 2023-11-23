@@ -10,7 +10,7 @@ using Polly.Contrib.WaitAndRetry;
 using Polly.Extensions.Http;
 using Polly.Retry;
 
-[assembly: InternalsVisibleTo("MailEase.Test")]
+[assembly: InternalsVisibleTo("MailEase.Tests")]
 
 namespace MailEase;
 
@@ -24,8 +24,8 @@ internal static class HttpPolicyOptions
         HttpPolicyExtensions.HandleTransientHttpError().WaitAndRetryAsync(Delay);
 }
 
-public abstract class BaseEmailProvider<TRequest> : IEmailProvider<TRequest>
-    where TRequest : IEmailMessage
+public abstract class BaseEmailProvider<TEmailMessage> : IEmailProvider<TEmailMessage>
+    where TEmailMessage : IEmailMessage
 {
     private readonly HttpClient _httpClient;
 
@@ -54,11 +54,11 @@ public abstract class BaseEmailProvider<TRequest> : IEmailProvider<TRequest>
     }
 
     public abstract Task SendEmailAsync(
-        TRequest message,
+        TEmailMessage message,
         CancellationToken cancellationToken = default
     );
 
-    protected virtual void ValidateEmailMessage(TRequest request)
+    protected virtual void ValidateEmailMessage(TEmailMessage request)
     {
         var mailEaseException = new MailEaseException();
 
@@ -92,7 +92,7 @@ public abstract class BaseEmailProvider<TRequest> : IEmailProvider<TRequest>
             throw mailEaseException;
     }
 
-    protected virtual MailEaseException ProviderSpecificValidation(TRequest request)
+    protected virtual MailEaseException ProviderSpecificValidation(TEmailMessage request)
     {
         return new MailEaseException();
     }
@@ -160,7 +160,7 @@ public abstract class BaseEmailProvider<TRequest> : IEmailProvider<TRequest>
             response.EnsureSuccessStatusCode();
     }
 
-    protected Task<(TData?, TErrorResponse?)> PostJsonAsync<TData, TErrorResponse>(
+    public virtual Task<(TData?, TErrorResponse?)> PostJsonAsync<TData, TErrorResponse>(
         object content,
         bool throwOnError = true
     )
@@ -168,7 +168,7 @@ public abstract class BaseEmailProvider<TRequest> : IEmailProvider<TRequest>
         where TErrorResponse : class =>
         PostJsonAsync<TData, TErrorResponse>("", content, throwOnError: throwOnError);
 
-    protected async Task<(TData?, TErrorResponse?)> PostJsonAsync<TData, TErrorResponse>(
+    public virtual async Task<(TData?, TErrorResponse?)> PostJsonAsync<TData, TErrorResponse>(
         string url,
         object content,
         bool throwOnError = true

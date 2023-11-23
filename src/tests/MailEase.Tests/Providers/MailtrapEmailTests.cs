@@ -2,21 +2,18 @@ using System.Text;
 using MailEase.Providers.Mailtrap;
 using Microsoft.Extensions.Configuration;
 
-namespace MailEase.Test.Providers;
+namespace MailEase.Tests.Providers;
 
-public sealed class MailtrapEmailTests
+public sealed class MailtrapEmailTests : IClassFixture<ConfigurationFixture>
 {
     private readonly IEmailProvider<MailtrapMessage> _emailProvider;
     private readonly string _subject = "MailEase";
     private readonly string _from;
     private readonly string _to;
 
-    public MailtrapEmailTests()
+    public MailtrapEmailTests(ConfigurationFixture fixture)
     {
-        var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json", true)
-            .AddEnvironmentVariables()
-            .Build();
+        var config = fixture.Config;
 
         var apiKey =
             config.GetValue<string>("MAILTRAP_API_KEY")
@@ -34,14 +31,14 @@ public sealed class MailtrapEmailTests
     }
 
     [Fact]
-    public void SendEmailWithEmptyApiKeyShouldThrow()
+    public void SendEmail_WithEmptyApiKey_ShouldThrowArgumentNullException()
     {
         var mailtrapParamsFunc = () => Emails.Mailtrap(new MailtrapParams(""));
         mailtrapParamsFunc.Should().Throw<ArgumentNullException>("Bearer token cannot be empty.");
     }
 
     [Fact]
-    public async Task SendEmail()
+    public async Task SendEmail_ShouldSucceed()
     {
         var request = new MailtrapMessage
         {
@@ -56,7 +53,7 @@ public sealed class MailtrapEmailTests
     }
 
     [Fact]
-    public async Task SendEmailWithAttachment()
+    public async Task SendEmail_WithAttachment_ShouldSucceed()
     {
         var attachment = new EmailAttachment(
             "MyVerySecretAttachment.txt",

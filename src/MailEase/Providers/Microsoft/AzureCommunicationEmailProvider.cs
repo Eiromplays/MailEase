@@ -32,7 +32,7 @@ public sealed class AzureCommunicationEmailProvider
         CancellationToken cancellationToken = default
     )
     {
-        //ValidateEmailMessage(message); // Performs some common validations
+        ValidateEmailMessage(message); // Performs some common validations
 
         var (data, error) = await PostJsonAsync<
             AzureCommunicationEmailResponse,

@@ -1,4 +1,4 @@
-namespace MailEase.Test;
+namespace MailEase.Tests;
 
 /// <summary>
 /// A email provider used for testing
@@ -26,14 +26,14 @@ public sealed class BaseEmailProviderTests
     private readonly IEmailProvider<BaseTestEmailMessage> _emailProvider =
         new BaseTestEmailProvider();
 
-    public const string Subject = "MailEase";
+    private const string Subject = "MailEase";
 
     // These do not have to be actual email addresses, as long as they follow the format of an email address.
-    public const string From = "sender@example.com";
-    public const string To = "yourmail@example.com";
+    private const string From = "sender@example.com";
+    private const string To = "yourmail@example.com";
 
     [Fact]
-    public async Task SendEmailWithInvalidSubject()
+    public async Task SendEmail_WithInvalidSubject_ShouldThrowMailEaseException()
     {
         var request = new BaseTestEmailMessage
         {
@@ -43,7 +43,7 @@ public sealed class BaseEmailProviderTests
             Body = "<h1>Hello</h1>",
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
@@ -52,7 +52,7 @@ public sealed class BaseEmailProviderTests
     }
 
     [Fact]
-    public async Task SendEmailWithInvalidFrom()
+    public async Task SendEmail_WithInvalidFrom_ShouldThrowMailEaseException()
     {
         var request = new BaseTestEmailMessage
         {
@@ -62,7 +62,7 @@ public sealed class BaseEmailProviderTests
             Body = "<h1>Hello</h1>",
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
@@ -71,7 +71,7 @@ public sealed class BaseEmailProviderTests
     }
 
     [Fact]
-    public async Task SendEmailWithNoRecipients()
+    public async Task SendEmail_WithNoRecipients_ShouldThrowMailEaseException()
     {
         var request = new BaseTestEmailMessage
         {
@@ -81,7 +81,7 @@ public sealed class BaseEmailProviderTests
             Body = "<h1>Hello</h1>",
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
@@ -90,7 +90,7 @@ public sealed class BaseEmailProviderTests
     }
 
     [Fact]
-    public async Task SendEmailWithInvalidToRecipients()
+    public async Task SendEmail_WithInvalidToRecipient_ShouldThrowMailEaseException()
     {
         var request = new BaseTestEmailMessage
         {
@@ -100,7 +100,7 @@ public sealed class BaseEmailProviderTests
             Body = "<h1>Hello</h1>",
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
@@ -109,7 +109,7 @@ public sealed class BaseEmailProviderTests
     }
 
     [Fact]
-    public async Task SendEmailWithInvalidCcRecipients()
+    public async Task SendEmail_WithInvalidCcRecipient_ShouldThrowMailEaseException()
     {
         var request = new BaseTestEmailMessage
         {
@@ -120,7 +120,7 @@ public sealed class BaseEmailProviderTests
             Body = "<h1>Hello</h1>",
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
@@ -129,7 +129,7 @@ public sealed class BaseEmailProviderTests
     }
 
     [Fact]
-    public async Task SendEmailWithInvalidBccRecipients()
+    public async Task SendEmail_WithInvalidBccRecipient_ShouldThrowMailEaseException()
     {
         var request = new BaseTestEmailMessage
         {
@@ -140,7 +140,7 @@ public sealed class BaseEmailProviderTests
             Body = "<h1>Hello</h1>",
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
@@ -149,7 +149,7 @@ public sealed class BaseEmailProviderTests
     }
 
     [Fact]
-    public async Task SendEmailWithInvalidReplyToRecipients()
+    public async Task SendEmail_WithInvalidReplyToRecipient_ShouldThrowMailEaseException()
     {
         var request = new BaseTestEmailMessage
         {
@@ -160,18 +160,16 @@ public sealed class BaseEmailProviderTests
             Body = "<h1>Hello</h1>",
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
-            .Where(
-                x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidReplyToRecipients)
-            );
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidReplyToRecipients));
     }
 
     [Fact]
-    public async Task SendEmailWithInvalidBody()
+    public async Task SendEmail_WithInvalidBody_ShouldThrowMailEaseException()
     {
         var request = new BaseTestEmailMessage
         {
@@ -182,7 +180,7 @@ public sealed class BaseEmailProviderTests
             Body = "",
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
@@ -191,7 +189,7 @@ public sealed class BaseEmailProviderTests
     }
 
     [Fact]
-    public async Task SendEmailWithInvalidBodyAndSubject()
+    public async Task SendEmail_WithInvalidBodyAndSubject_ShouldThrowMailEaseException()
     {
         var request = new BaseTestEmailMessage
         {
@@ -201,7 +199,7 @@ public sealed class BaseEmailProviderTests
             Body = "",
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
