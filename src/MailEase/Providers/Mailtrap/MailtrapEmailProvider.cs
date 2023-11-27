@@ -9,9 +9,7 @@ public sealed class MailtrapEmailProvider : BaseEmailProvider<MailtrapMessage>
         : base(
             new Uri(new Uri(mailtrapParams.BaseAddress), mailtrapParams.Path),
             new StaticAuthHandler(new BearerToken(mailtrapParams.ApiKey))
-        )
-    {
-    }
+        ) { }
 
     public override async Task SendEmailAsync(
         MailtrapMessage message,
@@ -43,10 +41,10 @@ public sealed class MailtrapEmailProvider : BaseEmailProvider<MailtrapMessage>
                 .Select(e => new MailtrapEmailAddress(e.Address, e.Name))
                 .ToList(),
             Headers = message.Headers,
-            // TODO: custom variables
+            CustomVariables = message.CustomVariables,
             Subject = message.Subject,
-            Text = message.PlainTextBody,
-            Html = message.Body,
+            Text = message.Text,
+            Html = message.Html,
             Category = message.Category,
         };
 

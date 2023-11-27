@@ -38,22 +38,21 @@ public sealed class MailtrapEmailTests : IClassFixture<ConfigurationFixture>
     }
 
     [Fact]
-    public async Task SendEmail_ShouldSucceed()
+    public Task SendEmail_ShouldSucceed()
     {
         var request = new MailtrapMessage
         {
             Subject = _subject,
             From = new EmailAddress(_from, "MailEase"),
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
-            Body = "<h1>Hello</h1>",
-            IsHtmlBody = true
+            Html = "<h1>Hello</h1>"
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 
     [Fact]
-    public async Task SendEmail_WithAttachment_ShouldSucceed()
+    public Task SendEmail_WithAttachment_ShouldSucceed()
     {
         var attachment = new EmailAttachment(
             "MyVerySecretAttachment.txt",
@@ -67,10 +66,9 @@ public sealed class MailtrapEmailTests : IClassFixture<ConfigurationFixture>
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Attachments = new List<EmailAttachment> { attachment },
-            Body = "<h1>Hello</h1>",
-            IsHtmlBody = true
+            Html = "<h1>Hello</h1>"
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 }

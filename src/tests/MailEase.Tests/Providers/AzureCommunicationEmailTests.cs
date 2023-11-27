@@ -54,8 +54,7 @@ public sealed class AzureCommunicationEmailTests : IClassFixture<ConfigurationFi
             Subject = _subject,
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
-            Body = "<h1>Hello</h1>",
-            IsHtmlBody = true
+            Html = "<h1>Hello</h1>"
         };
 
         return _emailProvider.SendEmailAsync(request);
@@ -76,8 +75,7 @@ public sealed class AzureCommunicationEmailTests : IClassFixture<ConfigurationFi
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Attachments = new List<EmailAttachment> { attachment },
-            Body = "<h1>Hello</h1>",
-            IsHtmlBody = true
+            Html = "<h1>Hello</h1>"
         };
 
         return _emailProvider.SendEmailAsync(request);

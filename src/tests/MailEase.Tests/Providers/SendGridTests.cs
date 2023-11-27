@@ -38,22 +38,25 @@ public sealed class SendGridTests : IClassFixture<ConfigurationFixture>
     }
 
     [Fact]
-    public async Task SendEmail_WithSandboxMode_ShouldSucceed()
+    public Task SendEmail_WithSandboxMode_ShouldSucceed()
     {
         var request = new SendGridMessage
         {
             Subject = _subject,
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
-            Body = "<h1>Hello</h1>",
-            SandBoxMode = true
+            Html = "<h1>Hello</h1>",
+            MailSettings = new SendGridMailSettings
+            {
+                SandBoxMode = new SendGridSandBoxMode { Enable = true }
+            }
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 
     [Fact]
-    public async Task SendEmail_WithAttachment_ShouldSucceed()
+    public Task SendEmail_WithAttachment_ShouldSucceed()
     {
         var attachment = new EmailAttachment(
             "MyVerySecretAttachment.txt",
@@ -67,11 +70,10 @@ public sealed class SendGridTests : IClassFixture<ConfigurationFixture>
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Attachments = new List<EmailAttachment> { attachment },
-            Body = "<h1>Hello</h1>",
-            IsHtmlBody = true
+            Html = "<h1>Hello</h1>"
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 
     [Fact]
@@ -82,11 +84,11 @@ public sealed class SendGridTests : IClassFixture<ConfigurationFixture>
             Subject = _subject,
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
-            Body = "<h1>Hello</h1>",
+            Html = "<h1>Hello</h1>",
             SendAt = DateTimeOffset.UtcNow.AddHours(72).AddSeconds(1)
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()

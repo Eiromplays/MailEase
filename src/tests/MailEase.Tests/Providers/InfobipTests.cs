@@ -43,22 +43,21 @@ public sealed class InfobipTests : IClassFixture<ConfigurationFixture>
     }
 
     [Fact]
-    public async Task SendEmail_ShouldSucceed()
+    public Task SendEmail_ShouldSucceed()
     {
         var request = new InfobipMessage
         {
             Subject = _subject,
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
-            Body = "<h1>Hello</h1>",
-            IsHtmlBody = true
+            Html = "<h1>Hello</h1>"
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 
     [Fact]
-    public async Task SendEmail_WithAttachment_ShouldSucceed()
+    public Task SendEmail_WithAttachment_ShouldSucceed()
     {
         var attachment = new EmailAttachment(
             "MyVerySecretAttachment.txt",
@@ -72,11 +71,10 @@ public sealed class InfobipTests : IClassFixture<ConfigurationFixture>
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Attachments = new List<EmailAttachment> { attachment },
-            Body = "<h1>Hello</h1>",
-            IsHtmlBody = true
+            Html = "<h1>Hello</h1>"
         };
 
-        await _emailProvider.SendEmailAsync(request);
+        return _emailProvider.SendEmailAsync(request);
     }
 
     [Fact]
@@ -87,15 +85,34 @@ public sealed class InfobipTests : IClassFixture<ConfigurationFixture>
             Subject = _subject,
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
-            Body = "<h1>Hello</h1>",
+            Html = "<h1>Hello</h1>",
             SendAt = DateTimeOffset.UtcNow.AddDays(30).AddSeconds(1)
         };
 
-        var sendEmailAsync = async () => await _emailProvider.SendEmailAsync(request);
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
 
         await sendEmailAsync
             .Should()
             .ThrowAsync<MailEaseException>()
             .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.InvalidSendAt));
+    }
+
+    [Fact]
+    public async Task SendEmail_WithAmpHtml_But_No_Html_ShouldThrowMailEaseException()
+    {
+        var request = new InfobipMessage
+        {
+            Subject = _subject,
+            From = _from,
+            ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
+            AmpHtml = "<h1>Hello World</h1>"
+        };
+
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
+
+        await sendEmailAsync
+            .Should()
+            .ThrowAsync<MailEaseException>()
+            .Where(x => x.Errors.Any(y => true));
     }
 }

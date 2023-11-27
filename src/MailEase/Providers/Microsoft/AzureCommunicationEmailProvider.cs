@@ -73,10 +73,8 @@ public sealed class AzureCommunicationEmailProvider
             Content = new AzureCommunicationEmailContent
             {
                 Subject = message.Subject,
-                PlainText = !message.IsHtmlBody
-                    ? message.Body
-                    : message.PlainTextBody ?? string.Empty,
-                Html = message.IsHtmlBody ? message.Body : string.Empty
+                PlainText = message.Text ?? "",
+                Html = message.Html ?? "",
             },
             Recipients = new AzureCommunicationEmailRecipients
             {
@@ -92,8 +90,10 @@ public sealed class AzureCommunicationEmailProvider
             },
             ReplyTo = message.ReplyToAddresses
                 .Select(e => new AzureCommunicationEmailAddress(e.Address, e.Name ?? ""))
-                .ToList()
+                .ToList(),
+            UserEngagementTrackingDisabled = message.UserEngagementTrackingDisabled
         };
+
         foreach (var attachment in message.Attachments)
         {
             request.Attachments.Add(

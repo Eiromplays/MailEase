@@ -23,13 +23,13 @@ public static class BaseEmailMessageErrors
     public static readonly MailEaseErrorDetail InvalidReplyToRecipients =
         new(MailEaseErrorCode.InvalidReplyToRecipients, "One or more invalid reply-to recipients.");
 
-    public static readonly MailEaseErrorDetail InvalidBody =
-        new(MailEaseErrorCode.InvalidBody, "Body cannot be empty.");
-
     #region Provider specific errors
 
     public static MailEaseErrorDetail InvalidSendAt(string description) =>
         new(MailEaseErrorCode.InvalidSendAt, description);
+
+    public static MailEaseErrorDetail InvalidBody(string description) =>
+        new(MailEaseErrorCode.InvalidBody, description);
 
     #endregion
 }

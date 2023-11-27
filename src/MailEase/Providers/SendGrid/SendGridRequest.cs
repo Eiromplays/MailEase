@@ -8,16 +8,16 @@ public sealed class SendGridRequest
     public required SendGridEmailAddress From { get; init; }
 
     [JsonPropertyName("personalizations")]
-    public required List<SendGridPersonalization> Personalizations { get; init; } = new();
+    public required List<SendGridPersonalization> Personalizations { get; init; } = [];
 
     [JsonPropertyName("reply_to_list")]
-    public List<SendGridEmailAddress> ReplyToList { get; init; } = new();
+    public List<SendGridEmailAddress> ReplyToList { get; init; } = [];
 
     [JsonPropertyName("subject")]
     public required string Subject { get; init; }
 
     [JsonPropertyName("content")]
-    public required List<SendGridContent> Content { get; init; } = new();
+    public required List<SendGridContent> Content { get; init; } = [];
 
     [JsonPropertyName("attachments")]
     public List<SendGridAttachment>? Attachments { get; internal set; }

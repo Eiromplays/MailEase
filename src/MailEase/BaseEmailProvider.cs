@@ -83,8 +83,10 @@ public abstract class BaseEmailProvider<TEmailMessage> : IEmailProvider<TEmailMe
         if (!request.ReplyToAddresses.All(x => x.IsValid))
             mailEaseException.AddError(BaseEmailMessageErrors.InvalidReplyToRecipients);
 
-        if (string.IsNullOrWhiteSpace(request.Body))
-            mailEaseException.AddError(BaseEmailMessageErrors.InvalidBody);
+        if (string.IsNullOrWhiteSpace(request.Html) && string.IsNullOrWhiteSpace(request.Text))
+            mailEaseException.AddError(
+                BaseEmailMessageErrors.InvalidBody("Both Html and Text cannot be empty.")
+            );
 
         mailEaseException.AddErrors(ProviderSpecificValidation(request).Errors);
 

@@ -40,7 +40,7 @@ public sealed class BaseEmailProviderTests
             Subject = "",
             From = From,
             ToAddresses = new List<EmailAddress> { new(To, "MailEase") },
-            Body = "<h1>Hello</h1>",
+            Html = "<h1>Hello</h1>",
         };
 
         var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
@@ -59,7 +59,7 @@ public sealed class BaseEmailProviderTests
             Subject = Subject,
             From = "",
             ToAddresses = new List<EmailAddress> { new(To, "MailEase") },
-            Body = "<h1>Hello</h1>",
+            Html = "<h1>Hello</h1>",
         };
 
         var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
@@ -78,7 +78,7 @@ public sealed class BaseEmailProviderTests
             Subject = Subject,
             From = From,
             ToAddresses = new List<EmailAddress>(),
-            Body = "<h1>Hello</h1>",
+            Html = "<h1>Hello</h1>",
         };
 
         var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
@@ -97,7 +97,7 @@ public sealed class BaseEmailProviderTests
             Subject = Subject,
             From = From,
             ToAddresses = new List<EmailAddress> { new("email.com") },
-            Body = "<h1>Hello</h1>",
+            Html = "<h1>Hello</h1>",
         };
 
         var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
@@ -117,7 +117,7 @@ public sealed class BaseEmailProviderTests
             From = From,
             ToAddresses = new List<EmailAddress> { new("myemail@example.com") },
             CcAddresses = new List<EmailAddress> { new("email.com") },
-            Body = "<h1>Hello</h1>",
+            Html = "<h1>Hello</h1>",
         };
 
         var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
@@ -137,7 +137,7 @@ public sealed class BaseEmailProviderTests
             From = From,
             ToAddresses = new List<EmailAddress> { new("myemail@example.com") },
             BccAddresses = new List<EmailAddress> { new("email.com") },
-            Body = "<h1>Hello</h1>",
+            Html = "<h1>Hello</h1>",
         };
 
         var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
@@ -157,7 +157,7 @@ public sealed class BaseEmailProviderTests
             From = From,
             ToAddresses = new List<EmailAddress> { new("myemail@example.com") },
             ReplyToAddresses = new List<EmailAddress> { new("email.com") },
-            Body = "<h1>Hello</h1>",
+            Html = "<h1>Hello</h1>",
         };
 
         var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
@@ -177,7 +177,6 @@ public sealed class BaseEmailProviderTests
             From = From,
             ToAddresses = new List<EmailAddress> { new("myemail@example.com") },
             ReplyToAddresses = new List<EmailAddress> { new("email.com") },
-            Body = "",
         };
 
         var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
@@ -196,7 +195,6 @@ public sealed class BaseEmailProviderTests
             Subject = "",
             From = From,
             ToAddresses = new List<EmailAddress> { new("myemail@example.com") },
-            Body = "",
         };
 
         var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);

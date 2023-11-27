@@ -16,6 +16,9 @@ public sealed class MailtrapRequest
 
     public Dictionary<string, string> Headers { get; init; } = new();
 
+    [JsonPropertyName("custom_variables")]
+    public object? CustomVariables { get; init; }
+
     public required string Subject { get; init; }
 
     public string? Text { get; init; }

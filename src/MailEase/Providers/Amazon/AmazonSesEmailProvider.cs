@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using MailEase.Exceptions;
@@ -52,10 +51,12 @@ public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
         msg.AppendLine($"Content-Type: multipart/mixed; boundary=\"{boundary}\"");
         msg.AppendLine();
         msg.AppendLine($"--{boundary}");
-        var contentType = message.IsHtmlBody ? "text/html" : "text/plain";
-        msg.AppendLine($"Content-Type: {contentType}");
-        msg.AppendLine();
-        msg.AppendLine(message.Body);
+
+        if (!string.IsNullOrWhiteSpace(message.Text))
+            AddContentToMessage(msg, message.Text, "text/plain");
+
+        if (!string.IsNullOrWhiteSpace(message.Html))
+            AddContentToMessage(msg, message.Html, "text/html");
 
         foreach (var attachment in message.Attachments)
         {
@@ -105,6 +106,13 @@ public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
         return request;
     }
 
+    private static void AddContentToMessage(StringBuilder msg, string content, string contentType)
+    {
+        msg.AppendLine($"Content-Type: {contentType}");
+        msg.AppendLine();
+        msg.AppendLine(content);
+    }
+
     private MailEaseException ConvertProviderErrorResponseToGenericError(
         AmazonSesErrorResponse providerErrorResponse
     )
@@ -113,10 +121,6 @@ public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
         genericError.AddError(
             new MailEaseErrorDetail(MailEaseErrorCode.Unknown, providerErrorResponse.Message)
         );
-        /*foreach (var errorItem in providerErrorResponse.Errors)
-        {
-            genericError.AddError(new MailEaseErrorDetail(MailEaseErrorCode.Unknown, errorItem));
-        }*/
         return genericError;
     }
 }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MailEase.Exceptions;
 using MailEase.Utils;
 
@@ -42,24 +43,18 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
     private async Task<SendGridRequest> MapToProviderRequestAsync(SendGridMessage message)
     {
         var content = new List<SendGridContent>();
-        if (message.IsHtmlBody)
-        {
-            content.Add(new SendGridContent { Type = "text/html", Value = message.Body });
+        if (!string.IsNullOrWhiteSpace(message.Text))
+            content.Add(new SendGridContent { Type = "text/plain", Value = message.Text });
 
-            if (!string.IsNullOrWhiteSpace(message.PlainTextBody))
-                content.Add(
-                    new SendGridContent { Type = "text/plain", Value = message.PlainTextBody }
-                );
-        }
-        else
-            content.Add(new SendGridContent { Type = "text/plain", Value = message.Body });
+        if (!string.IsNullOrWhiteSpace(message.Html))
+            content.Add(new SendGridContent { Type = "text/html", Value = message.Html });
 
         var request = new SendGridRequest
         {
             From = message.From,
-            Personalizations = new List<SendGridPersonalization>
-            {
-                new()
+            Personalizations =
+            [
+                new SendGridPersonalization
                 {
                     To = message.ToAddresses
                         .Select(e => new SendGridEmailAddress(e.Address, e.Name))
@@ -77,19 +72,22 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
                                 .ToList()
                             : null,
                 }
-            },
+            ],
             ReplyToList = message.ReplyToAddresses
                 .Select(e => new SendGridEmailAddress(e.Address, e.Name))
                 .ToList(),
             Subject = message.Subject,
             Content = content,
+            TemplateId = message.TemplateId,
             Headers = message.Headers,
-            MailSettings = new SendGridMailSettings
-            {
-                SandBoxMode = new SendGridSandBoxMode { Enable = message.SandBoxMode }
-            },
-            TemplateId = message.Template,
-            SendAt = message.SendAt?.ToUnixTimeSeconds()
+            Categories = message.Categories,
+            CustomArgs = JsonSerializer.Serialize(message.CustomArgs),
+            SendAt = message.SendAt?.ToUnixTimeSeconds(),
+            BatchId = message.BatchId,
+            Asm = message.Asm,
+            IpPoolName = message.IpPoolName,
+            MailSettings = message.MailSettings,
+            TrackingSettings = message.TrackingSettings
         };
 
         if (message.Attachments.Count > 0)
