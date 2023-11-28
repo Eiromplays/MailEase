@@ -1,3 +1,5 @@
+using MimeKit;
+
 namespace MailEase;
 
 public record EmailAddress(string Address, string? Name = null)
@@ -8,6 +10,9 @@ public record EmailAddress(string Address, string? Name = null)
     public static implicit operator string(EmailAddress address) => address.ToString();
 
     public static implicit operator EmailAddress(string address) => new(address);
+
+    public static implicit operator MailboxAddress(EmailAddress address) =>
+        new(address.Name, address.Address);
 
     public bool IsValid
     {

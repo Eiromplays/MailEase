@@ -30,7 +30,8 @@ public abstract class BaseEmailProvider<TEmailMessage> : IEmailProvider<TEmailMe
     private readonly HttpClient _httpClient;
 
     /// <summary>
-    /// For testing purposes
+    /// Default constructor for BaseEmailProvider.
+    /// This constructor initializes an HttpClient with a default base address and is typically used for testing purposes and by the SMTP/MailKit provider which does not require a specific base address or authentication.
     /// </summary>
     internal BaseEmailProvider()
     {
@@ -41,15 +42,18 @@ public abstract class BaseEmailProvider<TEmailMessage> : IEmailProvider<TEmailMe
         };
     }
 
+    /// <summary>
+    /// An overload of the BaseEmailProvider constructor which accepts specific base address and HttpMessageHandler for authentication.
+    /// This constructor is used by email providers that require custom base address and specific authentication mechanisms.
+    /// </summary>
     protected BaseEmailProvider(Uri baseAddress, HttpMessageHandler authenticationHandler)
     {
-        if (baseAddress is null)
-            throw new ArgumentNullException(nameof(baseAddress));
+        ArgumentNullException.ThrowIfNull(baseAddress);
 
         _httpClient = new HttpClient(authenticationHandler)
         {
             BaseAddress = baseAddress,
-            DefaultRequestHeaders = { { "User-Agent", Constants.UserAgent }, }
+            DefaultRequestHeaders = { { "User-Agent", Constants.UserAgent }, },
         };
     }
 

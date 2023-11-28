@@ -56,7 +56,7 @@ public sealed class SendGridTests : IClassFixture<ConfigurationFixture>
     }
 
     [Fact]
-    public Task SendEmail_WithAttachment_ShouldSucceed()
+    public Task SendEmail_WithSandBoxModeAndAttachment_ShouldSucceed()
     {
         var attachment = new EmailAttachment(
             "MyVerySecretAttachment.txt",
@@ -70,7 +70,11 @@ public sealed class SendGridTests : IClassFixture<ConfigurationFixture>
             From = _from,
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Attachments = new List<EmailAttachment> { attachment },
-            Html = "<h1>Hello</h1>"
+            Html = "<h1>Hello</h1>",
+            MailSettings = new SendGridMailSettings
+            {
+                SandBoxMode = new SendGridSandBoxMode { Enable = true }
+            }
         };
 
         return _emailProvider.SendEmailAsync(request);

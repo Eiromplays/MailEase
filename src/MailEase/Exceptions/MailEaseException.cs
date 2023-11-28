@@ -2,8 +2,8 @@ namespace MailEase.Exceptions;
 
 public class MailEaseException : Exception
 {
-    private readonly List<MailEaseErrorDetail> _errors = new();
-
+    private readonly List<MailEaseErrorDetail> _errors = [];
+    
     public IReadOnlyList<MailEaseErrorDetail> Errors => _errors;
 
     public void AddError(MailEaseErrorDetail error)

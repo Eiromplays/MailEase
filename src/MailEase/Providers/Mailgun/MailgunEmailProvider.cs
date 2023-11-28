@@ -3,7 +3,14 @@ using MailEase.Exceptions;
 
 namespace MailEase.Providers.Mailgun;
 
-public sealed class MailgunEmailProvider : BaseEmailProvider<MailgunMessage>
+/// <summary>
+/// TODO: Finish development of MailgunEmailProvider.
+/// UNDER DEVELOPMENT: This class is currently untested and not ready for use.
+/// As it's an internal class, it should not be accessed directly outside this assembly.
+/// Please contact the maintainer for collaborating on testing or further development.
+/// This class extends from BaseEmailProvider using MailgunMessage.
+/// </summary>
+internal sealed class MailgunEmailProvider : BaseEmailProvider<MailgunMessage>
 {
     public MailgunEmailProvider(MailgunParams mailgunParams)
         : base(

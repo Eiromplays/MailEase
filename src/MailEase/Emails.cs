@@ -3,6 +3,7 @@ using MailEase.Providers.Infobip;
 using MailEase.Providers.Mailtrap;
 using MailEase.Providers.Microsoft;
 using MailEase.Providers.SendGrid;
+using MailEase.Providers.Smtp;
 
 namespace MailEase;
 
@@ -17,6 +18,9 @@ public static class Emails
 
     public static IEmailProvider<SendGridMessage> SendGrid(SendGridParams sendGridParams) =>
         new SendGridEmailProvider(sendGridParams);
+
+    public static IEmailProvider<SmtpMessage> Smtp(SmtpParams smtpParams) =>
+        new SmtpEmailProvider(smtpParams);
 
     public static IEmailProvider<InfobipMessage> Infobip(InfobipParams infobipParams) =>
         new InfobipEmailProvider(infobipParams);
