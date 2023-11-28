@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using MailEase.Exceptions;
 using MailEase.Utils;
+using MimeKit;
 
 namespace MailEase.Providers.Amazon;
 
@@ -41,42 +42,68 @@ public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
 
     private async Task<AmazonSesRequest> MapToProviderRequestAsync(AmazonSesMessage message)
     {
-        var boundary = $"MailEase{Guid.NewGuid():N}";
+        var mimeMessage = new MimeMessage();
 
-        var msg = new StringBuilder();
+        if (!mimeMessage.Headers.Contains(HeaderId.Subject))
+            mimeMessage.Headers.Add(HeaderId.Subject, Encoding.UTF8, message.Subject);
+        else
+            mimeMessage.Headers[HeaderId.Subject] = message.Subject;
 
-        msg.AppendLine($"From: {message.From.ToString()}");
-        msg.AppendLine($"To: {string.Join(',', message.ToAddresses.Select(e => e.ToString()))}");
-        msg.AppendLine($"Subject: {message.Subject}");
-        msg.AppendLine($"Content-Type: multipart/mixed; boundary=\"{boundary}\"");
-        msg.AppendLine();
-        msg.AppendLine($"--{boundary}");
+        mimeMessage.Headers.Add(HeaderId.Encoding, Encoding.UTF8.EncodingName);
 
+        mimeMessage.From.Add(message.From);
+
+        var bodyBuilder = new BodyBuilder();
         if (!string.IsNullOrWhiteSpace(message.Text))
-            AddContentToMessage(msg, message.Text, "text/plain");
-
+            bodyBuilder.TextBody = message.Text;
         if (!string.IsNullOrWhiteSpace(message.Html))
-            AddContentToMessage(msg, message.Html, "text/html");
+            bodyBuilder.HtmlBody = message.Html;
 
         foreach (var attachment in message.Attachments)
         {
-            var attachmentBase64 = await StreamHelpers.StreamToBase64Async(attachment.Content);
+            var attachmentPart = await bodyBuilder.Attachments.AddAsync(
+                attachment.FileName,
+                attachment.Content,
+                ContentType.Parse(attachment.ContentType)
+            );
 
-            msg.AppendLine($"--{boundary}");
-            msg.AppendLine($"Content-Type: {attachment.ContentType}"); //like application/pdf
-            msg.AppendLine($"Content-Disposition: attachment; filename=\"{attachment.FileName}\"");
-            msg.AppendLine("Content-Transfer-Encoding: base64");
-            msg.AppendLine();
-            msg.AppendLine(attachmentBase64);
+            if (!string.IsNullOrWhiteSpace(attachment.ContentId))
+                attachmentPart.ContentId = attachment.ContentId;
         }
 
-        msg.AppendLine($"--{boundary}--");
+        mimeMessage.Body = bodyBuilder.ToMessageBody();
+
+        mimeMessage.To.AddRange(
+            message.ToAddresses.Select(e => new MailboxAddress(e.Name, e.Address))
+        );
+
+        mimeMessage.Cc.AddRange(
+            message.CcAddresses.Select(e => new MailboxAddress(e.Name, e.Address))
+        );
+
+        mimeMessage.Bcc.AddRange(
+            message.BccAddresses.Select(e => new MailboxAddress(e.Name, e.Address))
+        );
+
+        mimeMessage.ReplyTo.AddRange(
+            message.ReplyToAddresses.Select(e => new MailboxAddress(e.Name, e.Address))
+        );
+
+        foreach (var header in message.Headers)
+        {
+            mimeMessage.Headers.Add(header.Key, header.Value);
+        }
+
+        using var memoryStream = new MemoryStream();
+        await mimeMessage.WriteToAsync(memoryStream);
+        memoryStream.Position = 0;
+        var mimeMessageBytes = memoryStream.ToArray();
 
         var content = new AmazonSesRequestContent
         {
             Raw = new AmazonSesRequestContentRaw
             {
-                Data = Convert.ToBase64String(Encoding.UTF8.GetBytes(msg.ToString())),
+                Data = Convert.ToBase64String(mimeMessageBytes),
             },
             Template = message.Template,
         };
@@ -104,13 +131,6 @@ public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
         };
 
         return request;
-    }
-
-    private static void AddContentToMessage(StringBuilder msg, string content, string contentType)
-    {
-        msg.AppendLine($"Content-Type: {contentType}");
-        msg.AppendLine();
-        msg.AppendLine(content);
     }
 
     private MailEaseException ConvertProviderErrorResponseToGenericError(

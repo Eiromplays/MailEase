@@ -15,4 +15,6 @@ public sealed record AmazonSesMessage : BaseEmailMessage
     public AmazonSesListManagementOptions? ListManagementOptions { get; init; }
 
     public AmazonSesRequestContentTemplate? Template { get; init; }
+
+    public Dictionary<string, string> Headers { get; init; } = new();
 }
