@@ -12,7 +12,7 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
             new StaticAuthHandler(new BearerToken(sendGridParams.ApiKey))
         ) { }
 
-    public override async Task SendEmailAsync(
+    public override async Task<EmailResponse> SendEmailAsync(
         SendGridMessage message,
         CancellationToken cancellationToken = default
     )
@@ -25,6 +25,8 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
 
         if (error is not null)
             throw ConvertProviderErrorResponseToGenericError(error);
+
+        return new EmailResponse(true);
     }
 
     protected override MailEaseException ProviderSpecificValidation(SendGridMessage request)
@@ -81,7 +83,7 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
             TemplateId = message.TemplateId,
             Headers = message.Headers,
             Categories = message.Categories,
-            CustomArgs = JsonSerializer.Serialize(message.CustomArgs),
+            CustomArgs = message.CustomArgs,
             SendAt = message.SendAt?.ToUnixTimeSeconds(),
             BatchId = message.BatchId,
             Asm = message.Asm,

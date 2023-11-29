@@ -24,7 +24,7 @@ public sealed class SmtpEmailProvider : BaseEmailProvider<SmtpMessage>
         _smtpParams = smtpParams;
     }
 
-    public override async Task SendEmailAsync(
+    public override async Task<EmailResponse> SendEmailAsync(
         SmtpMessage message,
         CancellationToken cancellationToken = default
     )
@@ -61,6 +61,8 @@ public sealed class SmtpEmailProvider : BaseEmailProvider<SmtpMessage>
             await client.SendAsync(await MapToProviderRequestAsync(message), cancellationToken);
 
             await client.DisconnectAsync(true, cancellationToken);
+
+            return new EmailResponse(true);
         }
         catch (Exception ex)
         {

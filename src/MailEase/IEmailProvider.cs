@@ -1,8 +1,12 @@
 namespace MailEase;
 
-public interface IEmailProvider<in TRequest> : IDisposable
-    where TRequest : IEmailMessage
+public interface IEmailProvider<in TEmailMessage>
+    where TEmailMessage : IEmailMessage
 {
-    Task SendEmailAsync(TRequest request, CancellationToken cancellationToken = default) =>
-        Task.CompletedTask;
+    Task<EmailResponse> SendEmailAsync(
+        TEmailMessage request,
+        CancellationToken cancellationToken = default
+    );
 }
+
+public record EmailResponse(bool IsSuccess, string[]? MessageIds = null);

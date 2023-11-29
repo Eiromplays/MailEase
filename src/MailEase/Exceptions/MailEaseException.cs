@@ -4,6 +4,15 @@ public class MailEaseException : Exception
 {
     private readonly List<MailEaseErrorDetail> _errors = [];
     
+    public MailEaseException()
+    {
+    }
+    
+    public MailEaseException(string message) : base(message)
+    {
+        AddError(new MailEaseErrorDetail(MailEaseErrorCode.Unknown, message));
+    }
+    
     public IReadOnlyList<MailEaseErrorDetail> Errors => _errors;
 
     public void AddError(MailEaseErrorDetail error)

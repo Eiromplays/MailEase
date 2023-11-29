@@ -1,7 +1,5 @@
 using System.Text;
-using System.Text.Json;
 using MailEase.Exceptions;
-using MailEase.Utils;
 using MimeKit;
 
 namespace MailEase.Providers.Amazon;
@@ -17,27 +15,26 @@ public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
             new SesAuthHandler(
                 amazonSesParams.AccessKeyId,
                 amazonSesParams.SecretAccessKey,
+                amazonSesParams.SessionToken,
                 amazonSesParams.Region
             )
         ) { }
 
-    public override async Task SendEmailAsync(
+    public override async Task<EmailResponse> SendEmailAsync(
         AmazonSesMessage message,
         CancellationToken cancellationToken = default
     )
     {
         ValidateEmailMessage(message); // Performs some common validations
 
-        var (data, error) = await PostJsonAsync<AmazonSesResponse, AmazonSesErrorResponse>(
+        var (response, error) = await PostJsonAsync<AmazonSesResponse, AmazonSesErrorResponse>(
             await MapToProviderRequestAsync(message)
         );
 
         if (error is not null)
             throw ConvertProviderErrorResponseToGenericError(error);
 
-        Console.WriteLine(
-            $"{JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true })}"
-        );
+        return new EmailResponse(response is not null, response is not null ? [response.MessageId] : null);
     }
 
     private async Task<AmazonSesRequest> MapToProviderRequestAsync(AmazonSesMessage message)

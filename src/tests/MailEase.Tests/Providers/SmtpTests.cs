@@ -100,7 +100,11 @@ public sealed class SmtpTests : IAsyncLifetime
         {
             Subject = Subject,
             From = From,
-            ToAddresses = new List<EmailAddress> { new(To, "MailEase") },
+            ToAddresses = new List<EmailAddress>
+            {
+                new(To, "MailEase"),
+                new("test2@testcontainer", "MailEase2")
+            },
             Attachments = new List<EmailAttachment> { attachment },
             Html = "<h1>Hello</h1>"
         };

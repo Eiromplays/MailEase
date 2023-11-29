@@ -2,7 +2,7 @@ using System.Text;
 using MailEase.Providers.Amazon;
 using Microsoft.Extensions.Configuration;
 
-namespace MailEase.Tests.Providers;
+namespace MailEase.Tests.Providers.Amazon;
 
 public sealed class AmazonSesTests : IClassFixture<ConfigurationFixture>
 {

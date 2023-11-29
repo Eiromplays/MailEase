@@ -1,4 +1,4 @@
-// Original code: https://github.com/aloneguid/stowage/blob/master/src/Stowage/Impl/Amazon/S3AuthHandler.cs
+// Original source code: https://github.com/aloneguid/stowage/blob/master/src/Stowage/Impl/Amazon/S3AuthHandler.cs
 
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -8,14 +8,19 @@ using MailEase.Utils;
 
 namespace MailEase.Providers.Amazon;
 
+/// <summary>
+/// Handles Amazon SES authentication.
+/// </summary>
 internal class SesAuthHandler : DelegatingHandler
 {
     private const string DateHeaderName = "x-amz-date";
     private const string AwsAuthorizationSchemeName = "AWS4-HMAC-SHA256";
     private const string AwsContentSha256HeaderName = "x-amz-content-sha256";
+    private const string AwsSecurityTokenHeaderName = "x-amz-security-token";
 
     private readonly string _accessKeyId;
     private readonly string _secretAccessKey;
+    private readonly string? _sessionToken;
     private readonly string _region;
     private readonly string _service;
     private static readonly string EmptySha256 = Array.Empty<byte>().SHA256().ToHexString()!;
@@ -23,6 +28,7 @@ internal class SesAuthHandler : DelegatingHandler
     public SesAuthHandler(
         string accessKeyId,
         string secretAccessKey,
+        string? sessionToken,
         string region,
         string service = "ses"
     )
@@ -30,10 +36,14 @@ internal class SesAuthHandler : DelegatingHandler
     {
         _accessKeyId = accessKeyId;
         _secretAccessKey = secretAccessKey;
+        _sessionToken = sessionToken;
         _region = region;
         _service = service;
     }
 
+    /// <summary>
+    /// Signs and sends an HTTP request asynchronously.
+    /// </summary>
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken
@@ -50,14 +60,11 @@ internal class SesAuthHandler : DelegatingHandler
         CancellationToken cancellationToken
     )
     {
-        return SendAsync(request, cancellationToken).Result;
+        return SendAsync(request, cancellationToken).GetAwaiter().GetResult();
     }
 #endif
 
-    protected async Task<string> SignAsync(
-        HttpRequestMessage request,
-        DateTimeOffset? signDate = null
-    )
+    protected async Task SignAsync(HttpRequestMessage request, DateTimeOffset? signDate = null)
     {
         // a very helpful article on S3 auth: https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
 
@@ -66,6 +73,9 @@ internal class SesAuthHandler : DelegatingHandler
         var amzNowDate = GetAmzDate(dateToUse);
 
         request.Headers.Add(DateHeaderName, amzNowDate);
+
+        if (!string.IsNullOrWhiteSpace(_sessionToken))
+            request.Headers.Add(AwsSecurityTokenHeaderName, _sessionToken);
 
         // 1. Create a canonical request
 
@@ -108,16 +118,7 @@ internal class SesAuthHandler : DelegatingHandler
          */
 
         var stringToSign =
-            $"{AwsAuthorizationSchemeName}\n"
-            + amzNowDate
-            + "\n"
-            + nowDate
-            + "/"
-            + _region
-            + "/"
-            + _service
-            + "/aws4_request\n"
-            + canonicalRequest.SHA256();
+            $"{AwsAuthorizationSchemeName}\n{amzNowDate}\n{nowDate}/{_region}/{_service}/aws4_request\n{canonicalRequest.SHA256()}";
 
         // 3. Calculate Signature
 
@@ -144,8 +145,6 @@ internal class SesAuthHandler : DelegatingHandler
             AwsAuthorizationSchemeName,
             auth
         );
-
-        return signature;
     }
 
     private static string GetAmzDate(DateTimeOffset date) => date.ToString("yyyyMMddTHHmmssZ");

@@ -18,19 +18,21 @@ internal sealed class MailgunEmailProvider : BaseEmailProvider<MailgunMessage>
             new StaticAuthHandler(new BearerToken(mailgunParams.ApiKey))
         ) { }
 
-    public override async Task SendEmailAsync(
+    public override async Task<EmailResponse> SendEmailAsync(
         MailgunMessage message,
         CancellationToken cancellationToken = default
     )
     {
         ValidateEmailMessage(message); // Performs some common validations
 
-        var (_, error) = await PostJsonAsync<MailgunResponse, MailgunErrorResponse>(
+        var (response, error) = await PostJsonAsync<MailgunResponse, MailgunErrorResponse>(
             MapToProviderRequest(message)
         );
 
         if (error is not null)
             throw ConvertProviderErrorResponseToGenericError(error);
+        
+        return new EmailResponse(response is not null, response is not null ? [response.Id] : null);
     }
 
     private MultipartFormDataContent MapToProviderRequest(MailgunMessage message)

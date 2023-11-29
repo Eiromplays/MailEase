@@ -19,6 +19,14 @@ public sealed record AmazonSesParams
     public string SecretAccessKey { get; }
 
     /// <summary>
+    /// Gets the session token associated with the user's session.
+    /// </summary>
+    /// <value>
+    /// The session token as a string. Returns null if no session token is available.
+    /// </value>
+    public string? SessionToken { get; }
+
+    /// <summary>
     /// Gets the region of the object.
     /// </summary>
     /// <value>
@@ -42,12 +50,25 @@ public sealed record AmazonSesParams
     /// </value>
     public string Path { get; }
 
+    public AmazonSesParams(string accessKeyId, string secretAccessKey, string region)
+        : this(accessKeyId, secretAccessKey, null, region, null, null) { }
+
     public AmazonSesParams(
         string accessKeyId,
         string secretAccessKey,
         string region,
-        string version = "/v2",
-        string path = "/email/outbound-emails"
+        string? version = null,
+        string? path = null
+    )
+        : this(accessKeyId, secretAccessKey, null, region, version, path) { }
+
+    public AmazonSesParams(
+        string accessKeyId,
+        string secretAccessKey,
+        string? sessionToken,
+        string region,
+        string? version = null,
+        string? path = null
     )
     {
         if (string.IsNullOrWhiteSpace(accessKeyId))
@@ -64,8 +85,9 @@ public sealed record AmazonSesParams
 
         AccessKeyId = accessKeyId;
         SecretAccessKey = secretAccessKey;
+        SessionToken = sessionToken;
         Region = region;
-        Version = version;
-        Path = path;
+        Version = version ?? "/v2";
+        Path = path ?? "/email/outbound-emails";
     }
 }

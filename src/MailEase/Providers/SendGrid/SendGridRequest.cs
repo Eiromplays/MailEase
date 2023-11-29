@@ -32,7 +32,7 @@ public sealed class SendGridRequest
     public List<string>? Categories { get; init; }
 
     [JsonPropertyName("custom_args")]
-    public string? CustomArgs { get; init; }
+    public object? CustomArgs { get; init; }
 
     [JsonPropertyName("send_at")]
     public long? SendAt { get; init; }

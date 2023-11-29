@@ -27,14 +27,14 @@ public sealed class AzureCommunicationEmailProvider
         _azureCommunicationParams = azureCommunicationParams;
     }
 
-    public override async Task SendEmailAsync(
+    public override async Task<EmailResponse> SendEmailAsync(
         AzureCommunicationEmailMessage message,
         CancellationToken cancellationToken = default
     )
     {
         ValidateEmailMessage(message); // Performs some common validations
 
-        var (data, error) = await PostJsonAsync<
+        var (response, error) = await PostJsonAsync<
             AzureCommunicationEmailResponse,
             AzureCommunicationEmailErrorResponse
         >(
@@ -45,9 +45,7 @@ public sealed class AzureCommunicationEmailProvider
         if (error is not null)
             throw ConvertProviderErrorResponseToGenericError(error);
 
-        Console.WriteLine(
-            $"{JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true })}"
-        );
+        return new EmailResponse(response is not null, response is not null ? [response.Id] : null);
     }
 
     protected override MailEaseException ProviderSpecificValidation(

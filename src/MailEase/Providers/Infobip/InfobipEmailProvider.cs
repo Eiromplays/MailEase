@@ -12,23 +12,24 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
             new StaticAuthHandler(new AppToken(infobipParams.ApiKey))
         ) { }
 
-    public override async Task SendEmailAsync(
+    public override async Task<EmailResponse> SendEmailAsync(
         InfobipMessage message,
         CancellationToken cancellationToken = default
     )
     {
         ValidateEmailMessage(message); // Performs some common validations
 
-        var (data, error) = await PostMultiPartFormDataAsync<InfobipResponse, InfobipErrorResponse>(
-            MapToProviderRequest(message)
-        );
+        var (response, error) = await PostMultiPartFormDataAsync<
+            InfobipResponse,
+            InfobipErrorResponse
+        >(MapToProviderRequest(message));
 
         if (error is not null)
             throw ConvertProviderErrorResponseToGenericError(error);
 
-        Console.WriteLine(
-            $"{JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true })}"
-        );
+        var messageIds = response?.Messages.Select(m => m.MessageId).ToArray();
+
+        return new EmailResponse(response is not null, messageIds);
     }
 
     protected override MailEaseException ProviderSpecificValidation(InfobipMessage request)

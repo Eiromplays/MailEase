@@ -18,6 +18,9 @@ public sealed class MailtrapEmailTests : IClassFixture<ConfigurationFixture>
         var apiKey =
             config.GetValue<string>("MAILTRAP_API_KEY")
             ?? throw new InvalidOperationException("Mailtrap API key cannot be empty.");
+        var inboxId =
+            config.GetValue<int?>("MAILTRAP_INBOX_ID")
+            ?? throw new InvalidOperationException("Inbox ID cannot be empty.");
 
         _subject = config.GetValue<string>("MAILTRAP_SUBJECT") ?? _subject;
         _from =
@@ -26,7 +29,10 @@ public sealed class MailtrapEmailTests : IClassFixture<ConfigurationFixture>
         _to =
             config.GetValue<string>("MAILTRAP_TO")
             ?? throw new InvalidOperationException("TO cannot be empty.");
-
+        // TODO: Implement/use this when I get access to the MailTrap sandbox mode
+        /*_emailProvider = Emails.Mailtrap(
+            new MailtrapParams(apiKey, "https://sandbox.api.mailtrap.io", $"api/send/{inboxId}")
+        );*/
         _emailProvider = Emails.Mailtrap(new MailtrapParams(apiKey));
     }
 

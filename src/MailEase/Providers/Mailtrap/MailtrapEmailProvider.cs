@@ -11,19 +11,21 @@ public sealed class MailtrapEmailProvider : BaseEmailProvider<MailtrapMessage>
             new StaticAuthHandler(new BearerToken(mailtrapParams.ApiKey))
         ) { }
 
-    public override async Task SendEmailAsync(
+    public override async Task<EmailResponse> SendEmailAsync(
         MailtrapMessage message,
         CancellationToken cancellationToken = default
     )
     {
         ValidateEmailMessage(message); // Performs some common validations
 
-        var (_, error) = await PostJsonAsync<MailtrapResponse, MailtrapErrorResponse>(
+        var (response, error) = await PostJsonAsync<MailtrapResponse, MailtrapErrorResponse>(
             await MapToProviderRequestAsync(message)
         );
 
         if (error is not null)
             throw ConvertProviderErrorResponseToGenericError(error);
+
+        return new EmailResponse(response is not null, response?.MessageIds.ToArray());
     }
 
     private async Task<MailtrapRequest> MapToProviderRequestAsync(MailtrapMessage message)

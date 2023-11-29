@@ -1,10 +1,8 @@
 using System.Text;
 using MailEase.Providers.Microsoft;
 using Microsoft.Extensions.Configuration;
-using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 
-namespace MailEase.Tests.Providers;
+namespace MailEase.Tests.Providers.Azure;
 
 public sealed class AzureCommunicationEmailTests : IClassFixture<ConfigurationFixture>
 {

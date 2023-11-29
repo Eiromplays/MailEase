@@ -1,10 +1,10 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using MailEase.Exceptions;
+using MailEase.Providers.Amazon;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Extensions.Http;
@@ -57,7 +57,7 @@ public abstract class BaseEmailProvider<TEmailMessage> : IEmailProvider<TEmailMe
         };
     }
 
-    public abstract Task SendEmailAsync(
+    public abstract Task<EmailResponse> SendEmailAsync(
         TEmailMessage message,
         CancellationToken cancellationToken = default
     );
@@ -108,7 +108,7 @@ public abstract class BaseEmailProvider<TEmailMessage> : IEmailProvider<TEmailMe
         CancellationToken cancellationToken = default
     ) =>
         HttpPolicyOptions.AsyncRetryPolicy.ExecuteAsync(
-            async () => await _httpClient.SendAsync(request, cancellationToken)
+            () => _httpClient.SendAsync(request, cancellationToken)
         );
 
     protected async Task<T> PostAsync<T>(
@@ -256,8 +256,8 @@ public abstract class BaseEmailProvider<TEmailMessage> : IEmailProvider<TEmailMe
             ?? throw new InvalidOperationException("Could not deserialize response.");
     }
 
-    protected async Task<T> GetAsync<T>(string url, bool throwOnError = true) =>
-        await GetAsync<T>(new HttpRequestMessage(HttpMethod.Get, url), throwOnError);
+    protected Task<T> GetAsync<T>(string url, bool throwOnError = true) =>
+        GetAsync<T>(new HttpRequestMessage(HttpMethod.Get, url), throwOnError);
 
     public void Dispose()
     {

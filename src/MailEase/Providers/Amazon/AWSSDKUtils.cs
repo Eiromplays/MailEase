@@ -1,4 +1,4 @@
-// Original code: https://github.com/aloneguid/stowage/blob/master/src/Stowage/Impl/Amazon/AWSSDKUtils.cs
+// Original source code: https://github.com/aloneguid/stowage/blob/master/src/Stowage/Impl/Amazon/AWSSDKUtils.cs
 
 using System.Text;
 

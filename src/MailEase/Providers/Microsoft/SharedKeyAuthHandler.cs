@@ -1,4 +1,3 @@
-using System.Buffers;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -7,8 +6,9 @@ namespace MailEase.Providers.Microsoft;
 
 internal class SharedKeyAuthHandler : DelegatingHandler
 {
-    private const string DateHeaderName = "x-ms-date";
-    private const string AuthorizationHeaderName = "Authorization";
+    public const string DateHeaderName = "x-ms-date";
+    public const string MsContentSha256HeaderName = "x-ms-content-sha256";
+    public const string AuthorizationHeaderName = "Authorization";
     private readonly string _accessKey;
 
     public SharedKeyAuthHandler(string accessKey)
@@ -19,6 +19,7 @@ internal class SharedKeyAuthHandler : DelegatingHandler
         CancellationToken cancellationToken
     )
     {
+        await SignAsync(request, cancellationToken: cancellationToken);
         AddHeaders(request, await CreateContentHashAsync(request, cancellationToken));
         return await base.SendAsync(request, cancellationToken);
     }
@@ -28,28 +29,33 @@ internal class SharedKeyAuthHandler : DelegatingHandler
         CancellationToken cancellationToken
     )
     {
-        AddHeaders(request, CreateContentHash(request, cancellationToken));
-        return base.Send(request, cancellationToken);
+        return SendAsync(request, cancellationToken).GetAwaiter().GetResult();
     }
 
-    private static string CreateContentHash(
+    protected async Task SignAsync(
         HttpRequestMessage request,
-        CancellationToken cancellationToken
+        DateTimeOffset? signDate = null,
+        CancellationToken cancellationToken = default
     )
     {
-        var alg = SHA256.Create();
+        var contentHash = await CreateContentHashAsync(request, cancellationToken);
 
-        using (var memoryStream = new MemoryStream())
-        using (var contentHashStream = new CryptoStream(memoryStream, alg, CryptoStreamMode.Write))
-        {
-            if (request.Content is not null)
-                new StreamContent(request.Content.ReadAsStream(cancellationToken)).WriteTo(
-                    contentHashStream,
-                    cancellationToken
-                );
-        }
+        var dateToUse = signDate ?? DateTimeOffset.UtcNow;
 
-        return Convert.ToBase64String(alg.Hash!);
+        var utcNowString = dateToUse.ToString("r", CultureInfo.InvariantCulture);
+        string? authorization = null;
+
+        if (request.RequestUri is not null)
+            authorization = GetAuthorizationHeader(
+                request.Method,
+                request.RequestUri,
+                contentHash,
+                utcNowString
+            );
+
+        request.Headers.Add(MsContentSha256HeaderName, contentHash);
+        request.Headers.Add(DateHeaderName, utcNowString);
+        request.Headers.Add(AuthorizationHeaderName, authorization);
     }
 
     private static async ValueTask<string> CreateContentHashAsync(
@@ -86,7 +92,7 @@ internal class SharedKeyAuthHandler : DelegatingHandler
                 utcNowString
             );
 
-        request.Headers.Add("x-ms-content-sha256", contentHash);
+        request.Headers.Add(MsContentSha256HeaderName, contentHash);
         request.Headers.Add(DateHeaderName, utcNowString);
         request.Headers.Add(AuthorizationHeaderName, authorization);
     }
@@ -132,48 +138,10 @@ internal sealed class StreamContent : IDisposable
         _stream = stream;
     }
 
-    public void WriteTo(Stream stream, CancellationToken cancellationToken)
+    public Task WriteToAsync(Stream stream, CancellationToken cancellation)
     {
         _stream.Seek(_origin, SeekOrigin.Begin);
-
-        // this is not using CopyTo so that we can honor cancellations.
-        var buffer = ArrayPool<byte>.Shared.Rent(CopyToBufferSize);
-        try
-        {
-            while (true)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var read = _stream.Read(buffer, 0, buffer.Length);
-                if (read == 0)
-                {
-                    break;
-                }
-                cancellationToken.ThrowIfCancellationRequested();
-                stream.Write(buffer, 0, read);
-            }
-        }
-        finally
-        {
-            stream.Flush();
-            ArrayPool<byte>.Shared.Return(buffer, true);
-        }
-    }
-
-    public bool TryComputeLength(out long length)
-    {
-        if (_stream.CanSeek)
-        {
-            length = _stream.Length - _origin;
-            return true;
-        }
-        length = 0;
-        return false;
-    }
-
-    public async Task WriteToAsync(Stream stream, CancellationToken cancellation)
-    {
-        _stream.Seek(_origin, SeekOrigin.Begin);
-        await _stream.CopyToAsync(stream, CopyToBufferSize, cancellation).ConfigureAwait(false);
+        return _stream.CopyToAsync(stream, CopyToBufferSize, cancellation);
     }
 
     public void Dispose()

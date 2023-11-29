@@ -5,14 +5,14 @@ namespace MailEase.Tests;
 /// </summary>
 internal sealed class BaseTestEmailProvider : BaseEmailProvider<BaseTestEmailMessage>
 {
-    public override Task SendEmailAsync(
+    public override Task<EmailResponse> SendEmailAsync(
         BaseTestEmailMessage message,
         CancellationToken cancellationToken = default
     )
     {
         ValidateEmailMessage(message);
 
-        return Task.CompletedTask;
+        return Task.FromResult(new EmailResponse(true, Array.Empty<string>()));
     }
 }
 
