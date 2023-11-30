@@ -88,7 +88,7 @@ public sealed class SesAuthHandlerTests
         var result = await Handler.ExecuteRequestAsync(HttpMethod.Get, date);
 
         // Assert
-        CheckHeader(result, "X-Amz-Date", expectedHeaderValue);
+        CheckHeader(result, SesAuthHandler.DateHeaderName, expectedHeaderValue);
     }
 
     // Assuming the "Authorization" header is added by the SignAsync method
@@ -105,6 +105,23 @@ public sealed class SesAuthHandlerTests
         var result = await Handler.ExecuteRequestAsync(HttpMethod.Get, date);
 
         // Assert
-        CheckHeader(result, "Authorization", expectedSignature);
+        CheckHeader(result, SesAuthHandler.AuthorizationHeaderName, expectedSignature);
+    }
+
+    [Fact]
+    public async Task ExecuteRequestAsync_ShouldInsertContentSha256Header()
+    {
+        // Arrange
+        var date = new DateTime(2023, 12, 27);
+
+        // Act
+        var result = await Handler.ExecuteRequestAsync(HttpMethod.Get, date);
+
+        // Assert
+        CheckHeader(
+            result,
+            SesAuthHandler.AwsContentSha256HeaderName,
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
     }
 }

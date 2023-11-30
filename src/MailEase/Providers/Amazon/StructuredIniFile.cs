@@ -6,7 +6,7 @@ internal abstract class IniEntity;
 
 internal class IniKeyValue(string key, string value, string? comment) : IniEntity
 {
-    public const string KeyValueSeparator = "=";
+    private const string KeyValueSeparator = "=";
 
     public string Key { get; } = key ?? throw new ArgumentNullException(nameof(key));
 
@@ -35,10 +35,7 @@ internal class IniKeyValue(string key, string value, string? comment) : IniEntit
         return new IniKeyValue(key, value, comment);
     }
 
-    public override string ToString()
-    {
-        return $"{Value}";
-    }
+    public override string ToString() => $"{Value}";
 }
 
 internal class IniComment(string value) : IniEntity
@@ -68,7 +65,7 @@ internal class IniSection
     /// <param name="name">Pass null to work with global section</param>
     public IniSection(string? name)
     {
-        if (name != null)
+        if (name is not null)
         {
             if (name.StartsWith('['))
                 name = name[1..];
@@ -88,11 +85,6 @@ internal class IniSection
             _keyToValue[ikv.Key] = ikv;
         }
     }
-
-    /// <summary>
-    /// Get key names in this section
-    /// </summary>
-    public string[] Keys => _keyToValue.Select(p => p.Key).ToArray();
 
     public IniKeyValue? Set(string key, string? value)
     {
@@ -132,48 +124,18 @@ internal class IniSection
         }
     }
 
-    public void WriteTo(StreamWriter writer)
-    {
-        foreach (var entity in _entities)
-        {
-            switch (entity)
-            {
-                case IniKeyValue ikv:
-                {
-                    writer.Write($"{ikv.Key}{IniKeyValue.KeyValueSeparator}{ikv.Value}");
-                    if (ikv.Comment is not null)
-                    {
-                        writer.Write(" ");
-                        writer.Write(IniComment.CommentSeparator);
-                        writer.Write(ikv.Comment.Value);
-                    }
-                    writer.WriteLine();
-                    continue;
-                }
-                case IniComment comment:
-                    writer.Write(IniComment.CommentSeparator);
-                    writer.WriteLine(comment.Value);
-                    break;
-            }
-        }
-    }
-
-    public override string ToString()
-    {
-        return Name ?? string.Empty;
-    }
+    public override string ToString() => Name ?? string.Empty;
 }
 
 internal class StructuredIniFile
 {
     private const string SectionBegin = "[";
-    private const string SectionEnd = "]";
 
     private readonly IniSection _globalSection;
     private readonly List<IniSection> _sections = [];
     private readonly Dictionary<string, IniKeyValue> _fullKeyNameToValue = new(StringComparer.InvariantCultureIgnoreCase);
 
-    public StructuredIniFile()
+    private StructuredIniFile()
     {
         _globalSection = new IniSection(null);
         _sections.Add(_globalSection);
@@ -181,12 +143,6 @@ internal class StructuredIniFile
 
     public string[] SectionNames =>
         _sections.Where(s => s.Name is not null).Select(s => s.Name!).ToArray();
-
-    public string[]? GetSectionKeys(string sectionName)
-    {
-        var section = _sections.FirstOrDefault(s => s.Name == sectionName);
-        return section?.Keys;
-    }
 
     public string? this[string? key]
     {
@@ -236,7 +192,7 @@ internal class StructuredIniFile
         return FromStream(input, parseInlineComments);
     }
 
-    public static StructuredIniFile FromStream(Stream inputStream, bool parseInlineComments = true)
+    private static StructuredIniFile FromStream(Stream inputStream, bool parseInlineComments = true)
     {
         ArgumentNullException.ThrowIfNull(inputStream);
 
@@ -279,22 +235,5 @@ internal class StructuredIniFile
         }
 
         return file;
-    }
-
-    public void WriteTo(Stream outputStream)
-    {
-        ArgumentNullException.ThrowIfNull(outputStream);
-
-        using var writer = new StreamWriter(outputStream);
-        foreach (var section in _sections)
-        {
-            if (section.Name is not null)
-            {
-                writer.WriteLine();
-                writer.WriteLine($"{SectionBegin}{section.Name}{SectionEnd}");
-            }
-
-            section.WriteTo(writer);
-        }
     }
 }

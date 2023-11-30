@@ -13,10 +13,11 @@ namespace MailEase.Providers.Amazon;
 /// </summary>
 internal class SesAuthHandler : DelegatingHandler
 {
-    private const string DateHeaderName = "x-amz-date";
-    private const string AwsAuthorizationSchemeName = "AWS4-HMAC-SHA256";
-    private const string AwsContentSha256HeaderName = "x-amz-content-sha256";
-    private const string AwsSecurityTokenHeaderName = "x-amz-security-token";
+    public const string DateHeaderName = "x-amz-date";
+    public const string AwsAuthorizationSchemeName = "AWS4-HMAC-SHA256";
+    public const string AwsContentSha256HeaderName = "x-amz-content-sha256";
+    public const string AwsSecurityTokenHeaderName = "x-amz-security-token";
+    public const string AuthorizationHeaderName = "Authorization";
 
     private readonly string _accessKeyId;
     private readonly string _secretAccessKey;

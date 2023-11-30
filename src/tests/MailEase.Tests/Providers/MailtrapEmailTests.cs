@@ -69,7 +69,7 @@ public sealed class MailtrapEmailTests : IClassFixture<ConfigurationFixture>
         var request = new MailtrapMessage
         {
             Subject = _subject,
-            From = _from,
+            From = new EmailAddress(_from, "MailEase"),
             ToAddresses = new List<EmailAddress> { new(_to, "MailEase") },
             Attachments = new List<EmailAttachment> { attachment },
             Html = "<h1>Hello</h1>"
