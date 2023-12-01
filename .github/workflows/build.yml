@@ -15,23 +15,14 @@ on:
 
 jobs:
   build-library:
-    name: Build library
+    name: Build Library
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
-      - name: Set env
-        run: echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-      - name: Set Version
-        run: |
-          echo $VERSION
-          echo ${{ env.VERSION }}
-
-          ASSEMBLY_VERSION=$(echo $VERSION | sed 's/-.*//')
-          echo "ASSEMBLY_VERSION=$ASSEMBLY_VERSION" >> $GITHUB_ENV
-      - name: Set Assembly Version
-        run: |
-          echo $ASSEMBLY_VERSION
-          echo ${{ env.ASSEMBLY_VERSION }}
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Set up .NET
         uses: actions/setup-dotnet@v3
         with:
@@ -39,9 +30,20 @@ jobs:
             6.0.x
             7.0.x
             8.0.x
+      - name: Calculate version number
+        id: semver
+        uses: paulhatch/semantic-version@v5.3.0
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          version_format: "${major}.${minor}.${patch}-pre.${increment}"
+          enable_prerelease_mode: true
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --no-restore --configuration Release /p:Version=${{ env.VERSION }} /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
+        run: dotnet build --no-restore --configuration Release /p:Version=${{ steps.semver.outputs.version_tag }}
       - name: Test
-        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal /p:Version=${{ env.VERSION }} /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
+        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal /p:Version=${{ steps.semver.outputs.version_tag }}
+      - name: Testing
+        run: echo ${{ steps.semver.outputs.version_tag }}
