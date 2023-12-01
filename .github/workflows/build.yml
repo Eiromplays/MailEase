@@ -8,6 +8,8 @@ on:
       - main
     
   pull_request:
+    tags:
+      - 'v*.*.*'
     branches:
       - main
 
@@ -18,11 +20,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-      - name: Set Release Version
+        run: echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Set Version
         run: |
-          echo $RELEASE_VERSION
-          echo ${{ env.RELEASE_VERSION }}
+          echo $VERSION
+          echo ${{ env.VERSION }}
+
+          ASSEMBLY_VERSION=$(echo $VERSION | sed 's/-.*//')
+          echo "ASSEMBLY_VERSION=ASSEMBLY_VERSION" >> $GITHUB_ENV
+      - name: Set Assembly Version
+        run: |
+          echo $ASSEMBLY_VERSION
+          echo ${{ env.ASSEMBLY_VERSION }}
       - name: Set up .NET
         uses: actions/setup-dotnet@v3
         with:
@@ -33,6 +42,6 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build --no-restore --configuration Release /p:Version=${{ env.$VERSION }} /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
       - name: Test
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal /p:Version=${{ env.$VERSION }} /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
