@@ -1,0 +1,69 @@
+name: build
+
+on:  
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-library:
+    name: Build Library
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: |
+            6.0.x
+            7.0.x
+            8.0.x
+      - name: Calculate version number
+        id: semver
+        uses: paulhatch/semantic-version@v5.3.0
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          version_format: "${major}.${minor}.${patch}-pre.${increment}"
+          enable_prerelease_mode: true
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore --configuration Release /p:Version=${{ steps.semver.outputs.version }} /p:AssemblyVersion=${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}
+      - name: Test
+        env:
+          INFOBIP_API_KEY: ${{ secrets.INFOBIP_API_KEY }}
+          INFOBIP_BASE_URL: ${{ secrets.INFOBIP_BASE_URL }}
+          INFOBIP_FROM: ${{ secrets.INFOBIP_FROM }}
+          INFOBIP_TO: ${{ secrets.INFOBIP_TO }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDGRID_FROM: ${{ secrets.SENDGRID_FROM }}
+          SENDGRID_TO: ${{ secrets.SENDGRID_TO }}
+          AZURE_COMMUNICATION_EMAIL_CONNECTION_STRING: ${{ secrets.AZURE_COMMUNICATION_EMAIL_CONNECTION_STRING }}
+          AZURE_COMMUNICATION_EMAIL_FROM: ${{ secrets.AZURE_COMMUNICATION_EMAIL_FROM }}
+          AZURE_COMMUNICATION_EMAIL_TO: ${{ secrets.AZURE_COMMUNICATION_EMAIL_TO }}
+          MAILTRAP_API_KEY: ${{ secrets.MAILTRAP_API_KEY }}
+          MAILTRAP_INBOX_ID: ${{ secrets.MAILTRAP_INBOX_ID }}
+          MAILTRAP_FROM: ${{ secrets.MAILTRAP_FROM }}
+          MAILTRAP_TO: ${{ secrets.MAILTRAP_TO }}
+          AMAZON_SES_ACCESS_KEY_ID: ${{ secrets.AMAZON_SES_ACCESS_KEY_ID }}
+          AMAZON_SES_SECRET_ACCESS_KEY: ${{ secrets.AMAZON_SES_SECRET_ACCESS_KEY }}
+          AMAZON_SES_REGION: ${{ secrets.AMAZON_SES_REGION }}
+          AMAZON_SES_FROM: ${{ secrets.AMAZON_SES_FROM }}
+          AMAZON_SES_TO: ${{ secrets.AMAZON_SES_TO }}
+        run: dotnet test --framework net8.0 --no-build --no-restore --configuration Release --verbosity normal /p:Version=${{ steps.semver.outputs.version }} /p:AssemblyVersion=${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}
+      - name: Gather build artifacts
+        run: |
+          mkdir -p artifacts
+          cp src/MailEase/bin/Release/*.nupkg artifacts
+          echo "${{ steps.semver.outputs.version }}" > artifacts/version.txt
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: library
+          path: artifacts/*
