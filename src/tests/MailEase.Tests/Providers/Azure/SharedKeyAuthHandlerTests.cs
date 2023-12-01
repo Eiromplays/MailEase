@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using MailEase.Providers.Microsoft;
 using Xunit.Abstractions;
 
@@ -110,6 +111,10 @@ public sealed class SharedKeyAuthHandlerTests
         );
         // Act
         var result = await Handler.ExecuteRequestAsync(HttpMethod.Get, date);
+
+        _testOutputHelper.WriteLine(
+            $"Headers = {JsonSerializer.Serialize(result.Headers, new JsonSerializerOptions { WriteIndented = true })}"
+        );
 
         // Assert
         CheckHeader(result, SharedKeyAuthHandler.AuthorizationHeaderName, expectedSignature);
