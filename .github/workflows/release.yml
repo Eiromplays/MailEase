@@ -9,7 +9,7 @@ on:
 
 jobs:
   release:
-    if: github.event.pull_request.merge
+    if: github.event.pull_request.merge == 'true'
     name: Release
     runs-on: ubuntu-latest
     steps:
