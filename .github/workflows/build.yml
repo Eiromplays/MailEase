@@ -42,6 +42,6 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --no-restore --configuration Release /p:Version=${{ steps.semver.outputs.version }}
+        run: dotnet build --no-restore --configuration Release /p:Version=${{ steps.semver.outputs.version }} /p:AssemblyVersion=${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}
       - name: Test
-        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal /p:Version=${{ steps.semver.outputs.version }}
+        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal /p:Version=${{ steps.semver.outputs.version }} /p:AssemblyVersion=${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}
