@@ -60,7 +60,7 @@ jobs:
       - name: Gather build artifacts
         run: |
           mkdir -p artifacts
-          mv *.nupkg artifacts
+          cp *.nupkg artifacts
           echo "${{ steps.semver.outputs.version }}" > artifacts/version.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
