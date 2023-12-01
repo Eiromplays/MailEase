@@ -60,7 +60,7 @@ jobs:
       - name: Gather build artifacts
         run: |
           mkdir -p artifacts
-          cp *.nupkg artifacts
+          cp src/MailEase/bin/Release/*.nupkg artifacts
           echo "${{ steps.semver.outputs.version }}" > artifacts/version.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
