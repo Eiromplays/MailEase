@@ -9,8 +9,8 @@ public class ConfigurationFixture
     public ConfigurationFixture()
     {
         Config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json", true)
             .AddEnvironmentVariables()
+            .AddUserSecrets<ConfigurationFixture>()
             .Build();
     }
 }
