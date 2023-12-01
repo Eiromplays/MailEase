@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using MailEase.Providers.Microsoft;
-using Xunit.Abstractions;
 
 namespace MailEase.Tests.Providers.Azure;
 
@@ -42,8 +41,6 @@ internal sealed class SharedKeyAuthHandlerWrapper : SharedKeyAuthHandler
 
 public sealed class SharedKeyAuthHandlerTests
 {
-    private readonly ITestOutputHelper _testOutputHelper;
-
     private static void CheckHeader(
         HttpRequestMessage requestMessage,
         string headerName,
@@ -56,11 +53,6 @@ public sealed class SharedKeyAuthHandlerTests
 
     private static readonly SharedKeyAuthHandlerWrapper Handler =
         new(Convert.ToBase64String(Encoding.UTF8.GetBytes("accessKey")));
-
-    public SharedKeyAuthHandlerTests(ITestOutputHelper testOutputHelper)
-    {
-        _testOutputHelper = testOutputHelper;
-    }
 
     // This is a placeholder test (assuming "X-My-Header" is a key in the header collection)
     // And the expected value for this key is "expectedValue"
@@ -102,19 +94,12 @@ public sealed class SharedKeyAuthHandlerTests
     public async Task ExecuteRequestAsync_ShouldInsertAuthorizationHeader()
     {
         // Arrange
-        var date = new DateTime(2023, 12, 27);
+        var date = new DateTime(2023, 12, 27, 0, 0, 0, DateTimeKind.Utc);
         const string expectedSignature =
-            "HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=3jvkKedfA0/ZZVZOi6XPhoDup/qanoH+v6LJxRUXUsk=";
-
-        _testOutputHelper.WriteLine(
-            $"Date = {date} - {date.ToString("r", CultureInfo.InvariantCulture)}"
-        );
+            "HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=Y/QjmS9N+yVnHqARODZ2wujyxSuPW2PLW7azhyRZpm8=";
+        
         // Act
         var result = await Handler.ExecuteRequestAsync(HttpMethod.Get, date);
-
-        _testOutputHelper.WriteLine(
-            $"Headers = {JsonSerializer.Serialize(result.Headers, new JsonSerializerOptions { WriteIndented = true })}"
-        );
 
         // Assert
         CheckHeader(result, SharedKeyAuthHandler.AuthorizationHeaderName, expectedSignature);
