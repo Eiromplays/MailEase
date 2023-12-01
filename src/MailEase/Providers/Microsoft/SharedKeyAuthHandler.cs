@@ -20,7 +20,6 @@ internal class SharedKeyAuthHandler : DelegatingHandler
     )
     {
         await SignAsync(request, cancellationToken: cancellationToken);
-        AddHeaders(request, await CreateContentHashAsync(request, cancellationToken));
         return await base.SendAsync(request, cancellationToken);
     }
 
@@ -55,6 +54,7 @@ internal class SharedKeyAuthHandler : DelegatingHandler
 
         request.Headers.Add(MsContentSha256HeaderName, contentHash);
         request.Headers.Add(DateHeaderName, utcNowString);
+        request.Headers.Remove(AuthorizationHeaderName);
         request.Headers.Add(AuthorizationHeaderName, authorization);
     }
 
@@ -77,24 +77,6 @@ internal class SharedKeyAuthHandler : DelegatingHandler
         }
 
         return Convert.ToBase64String(alg.Hash!);
-    }
-
-    private void AddHeaders(HttpRequestMessage request, string contentHash)
-    {
-        var utcNowString = DateTimeOffset.UtcNow.ToString("r", CultureInfo.InvariantCulture);
-        string? authorization = null;
-
-        if (request.RequestUri is not null)
-            authorization = GetAuthorizationHeader(
-                request.Method,
-                request.RequestUri,
-                contentHash,
-                utcNowString
-            );
-
-        request.Headers.Add(MsContentSha256HeaderName, contentHash);
-        request.Headers.Add(DateHeaderName, utcNowString);
-        request.Headers.Add(AuthorizationHeaderName, authorization);
     }
 
     private string GetAuthorizationHeader(
