@@ -105,7 +105,9 @@ public sealed class SharedKeyAuthHandlerTests
         const string expectedSignature =
             "HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=3jvkKedfA0/ZZVZOi6XPhoDup/qanoH+v6LJxRUXUsk=";
 
-        _testOutputHelper.WriteLine($"Date = {date}");
+        _testOutputHelper.WriteLine(
+            $"Date = {date} - {date.ToString("r", CultureInfo.InvariantCulture)}"
+        );
         // Act
         var result = await Handler.ExecuteRequestAsync(HttpMethod.Get, date);
 
