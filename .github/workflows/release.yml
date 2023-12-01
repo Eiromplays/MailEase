@@ -2,6 +2,8 @@ name: Relase and Publish
 
 on:
   pull_request_target:
+    paths-ignore:
+      - '.github/workflows/**'
     types:
       - closed
     branches:
