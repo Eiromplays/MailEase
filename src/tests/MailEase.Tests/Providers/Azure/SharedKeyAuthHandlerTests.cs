@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using MailEase.Providers.Microsoft;
+using Xunit.Abstractions;
 
 namespace MailEase.Tests.Providers.Azure;
 
@@ -40,6 +41,8 @@ internal sealed class SharedKeyAuthHandlerWrapper : SharedKeyAuthHandler
 
 public sealed class SharedKeyAuthHandlerTests
 {
+    private readonly ITestOutputHelper _testOutputHelper;
+
     private static void CheckHeader(
         HttpRequestMessage requestMessage,
         string headerName,
@@ -52,6 +55,11 @@ public sealed class SharedKeyAuthHandlerTests
 
     private static readonly SharedKeyAuthHandlerWrapper Handler =
         new(Convert.ToBase64String(Encoding.UTF8.GetBytes("accessKey")));
+
+    public SharedKeyAuthHandlerTests(ITestOutputHelper testOutputHelper)
+    {
+        _testOutputHelper = testOutputHelper;
+    }
 
     // This is a placeholder test (assuming "X-My-Header" is a key in the header collection)
     // And the expected value for this key is "expectedValue"
@@ -97,6 +105,7 @@ public sealed class SharedKeyAuthHandlerTests
         const string expectedSignature =
             "HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=3jvkKedfA0/ZZVZOi6XPhoDup/qanoH+v6LJxRUXUsk=";
 
+        _testOutputHelper.WriteLine($"Date = {date}");
         // Act
         var result = await Handler.ExecuteRequestAsync(HttpMethod.Get, date);
 
