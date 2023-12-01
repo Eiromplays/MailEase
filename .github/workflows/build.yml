@@ -6,7 +6,7 @@ on:
       - 'v*.*.*'
     branches:
       - main
-    
+  
   pull_request:
     tags:
       - 'v*.*.*'
@@ -27,7 +27,7 @@ jobs:
           echo ${{ env.VERSION }}
 
           ASSEMBLY_VERSION=$(echo $VERSION | sed 's/-.*//')
-          echo "ASSEMBLY_VERSION=ASSEMBLY_VERSION" >> $GITHUB_ENV
+          echo "ASSEMBLY_VERSION=$ASSEMBLY_VERSION" >> $GITHUB_ENV
       - name: Set Assembly Version
         run: |
           echo $ASSEMBLY_VERSION
@@ -42,6 +42,6 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --no-restore --configuration Release /p:Version=${{ env.$VERSION }} /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
+        run: dotnet build --no-restore --configuration Release /p:Version=${{ env.VERSION }} /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
       - name: Test
-        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal /p:Version=${{ env.$VERSION }} /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
+        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal /p:Version=${{ env.VERSION }} /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
