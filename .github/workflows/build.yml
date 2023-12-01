@@ -57,7 +57,7 @@ jobs:
           AMAZON_SES_FROM: ${{ secrets.AMAZON_SES_FROM }}
           AMAZON_SES_TO: ${{ secrets.AMAZON_SES_TO }}
         run: dotnet test --framework net8.0 --no-build --no-restore --configuration Release --verbosity normal /p:Version=${{ steps.semver.outputs.version }} /p:AssemblyVersion=${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}
-      - name: Get build artifacts
+      - name: Gather build artifacts
         run: |
           mkdir -p artifacts
           mv *.nupkg artifacts
