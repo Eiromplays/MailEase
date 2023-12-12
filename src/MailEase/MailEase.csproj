@@ -14,6 +14,7 @@
         <Nullable>enable</Nullable>
         <WarningsAsErrors>nullable</WarningsAsErrors>
         <NoWarn>$(NoWarn);NU1701;NU1702;CS0436</NoWarn>
+        <UserSecretsId>aca71cb2-6753-4f84-b46b-873c23108964</UserSecretsId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">

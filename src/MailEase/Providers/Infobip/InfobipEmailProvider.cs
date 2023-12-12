@@ -6,6 +6,13 @@ namespace MailEase.Providers.Infobip;
 
 public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
 {
+    /// <summary>
+    /// The maximum number of recipients allowed.
+    /// The Infobip API supports up to 1000 recipients per request.
+    /// See: https://www.infobip.com/docs/api/channels/email/send-fully-featured-email
+    /// </summary>
+    private const int MaxRecipients = 1000;
+
     public InfobipEmailProvider(InfobipParams infobipParams)
         : base(
             new Uri(infobipParams.BaseAddress, infobipParams.Path),
@@ -19,17 +26,58 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
     {
         ValidateEmailMessage(message); // Performs some common validations
 
-        var (response, error) = await PostMultiPartFormDataAsync<
-            InfobipResponse,
-            InfobipErrorResponse
-        >(MapToProviderRequest(message));
+        var responses = new List<InfobipResponse>();
+        
+        var totalRecipients = message.ToAddresses.Count + message.CcAddresses.Count + message.BccAddresses.Count;
+        var recipientsExceedsLimit = totalRecipients > MaxRecipients;
+        
+        if (recipientsExceedsLimit && message.UseSplitting)
+        {
+            const int chunkSize = MaxRecipients / 3;
 
-        if (error is not null)
-            throw ConvertProviderErrorResponseToGenericError(error);
+            var toAddressChunks = message.ToAddresses.Chunk(chunkSize).ToList();
+            
+            var ccAddressChunks = message.CcAddresses.Chunk(chunkSize).ToList();
+            
+            var bccAddressChunks = message.BccAddresses.Chunk(chunkSize).ToList();
 
-        var messageIds = response?.Messages.Select(m => m.MessageId).ToArray();
-
-        return new EmailResponse(response is not null, messageIds);
+            var maxChunks = Math.Max(toAddressChunks.Count, Math.Max(ccAddressChunks.Count, bccAddressChunks.Count));
+            for (var i = 0; i < maxChunks; i++)
+            {
+                message.ToAddresses.Clear();
+                message.ToAddresses.AddRange(toAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.CcAddresses.Clear();
+                message.CcAddresses.AddRange(ccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.BccAddresses.Clear();
+                message.BccAddresses.AddRange(bccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                
+                var (response, error) = await PostMultiPartFormDataAsync<
+                    InfobipResponse,
+                    InfobipErrorResponse
+                >(MapToProviderRequest(message));
+                
+                if (error is not null)
+                    throw ConvertProviderErrorResponseToGenericError(error);
+                
+                if (response is not null)
+                    responses.Add(response);
+            }
+        }
+        else
+        {
+            var (response, error) = await PostMultiPartFormDataAsync<
+                InfobipResponse,
+                InfobipErrorResponse
+            >(MapToProviderRequest(message));
+            
+            if (error is not null)
+                throw ConvertProviderErrorResponseToGenericError(error);
+            
+            if (response is not null)
+                responses.Add(response);
+        }
+        
+        return new EmailResponse(responses.Count > 0, responses.SelectMany(response => response.Messages.Select(m => m.MessageId)).ToArray());
     }
 
     protected override MailEaseException ProviderSpecificValidation(InfobipMessage request)
@@ -47,6 +95,12 @@ public sealed class InfobipEmailProvider : BaseEmailProvider<InfobipMessage>
                 BaseEmailMessageErrors.InvalidBody("Html cannot be empty when AmpHtml is provided")
             );
 
+        // Throw an exception if the total number of recipients exceeds the limit and useSplitting is disabled.
+        if (request.ToAddresses.Count + request.CcAddresses.Count + request.BccAddresses.Count > MaxRecipients && !request.UseSplitting)
+            mailEaseException.AddError(
+                BaseEmailMessageErrors.RecipientsExceedLimit(MaxRecipients)
+            );
+        
         return mailEaseException;
     }
 

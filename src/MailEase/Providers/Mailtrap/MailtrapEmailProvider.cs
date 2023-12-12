@@ -5,6 +5,13 @@ namespace MailEase.Providers.Mailtrap;
 
 public sealed class MailtrapEmailProvider : BaseEmailProvider<MailtrapMessage>
 {
+    /// <summary>
+    /// The maximum number of recipients allowed.
+    /// The Mailtrap API supports up to 1000 recipients per request.
+    /// See: https://api-docs.mailtrap.io/docs/mailtrap-api-docs/67f1d70aeb62c-send-email
+    /// </summary>
+    private const int MaxRecipients = 1000;
+
     public MailtrapEmailProvider(MailtrapParams mailtrapParams)
         : base(
             new Uri(new Uri(mailtrapParams.BaseAddress), mailtrapParams.Path),
@@ -18,14 +25,68 @@ public sealed class MailtrapEmailProvider : BaseEmailProvider<MailtrapMessage>
     {
         ValidateEmailMessage(message); // Performs some common validations
 
-        var (response, error) = await PostJsonAsync<MailtrapResponse, MailtrapErrorResponse>(
-            await MapToProviderRequestAsync(message)
-        );
+        var responses = new List<MailtrapResponse>();
 
-        if (error is not null)
-            throw ConvertProviderErrorResponseToGenericError(error);
+        var totalRecipients = message.ToAddresses.Count + message.CcAddresses.Count + message.BccAddresses.Count;
+        var recipientsExceedsLimit = totalRecipients > MaxRecipients;
+        
+        if (recipientsExceedsLimit && message.UseSplitting)
+        {
+            const int chunkSize = MaxRecipients / 3;
+            
+            var toAddressChunks = message.ToAddresses.Chunk(chunkSize).ToList();
+            
+            var ccAddressChunks = message.CcAddresses.Chunk(chunkSize).ToList();
+            
+            var bccAddressChunks = message.BccAddresses.Chunk(chunkSize).ToList();
 
-        return new EmailResponse(response is not null, response?.MessageIds.ToArray());
+            var maxChunks = Math.Max(toAddressChunks.Count, Math.Max(ccAddressChunks.Count, bccAddressChunks.Count));
+            for (var i = 0; i < maxChunks; i++)
+            {
+                message.ToAddresses.Clear();
+                message.ToAddresses.AddRange(toAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.CcAddresses.Clear();
+                message.CcAddresses.AddRange(ccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.BccAddresses.Clear();
+                message.BccAddresses.AddRange(bccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                var (response, error) = await PostJsonAsync<MailtrapResponse, MailtrapErrorResponse>(
+                    await MapToProviderRequestAsync(message)
+                );
+                
+                if (error is not null)
+                    throw ConvertProviderErrorResponseToGenericError(error);
+                
+                if (response is not null) 
+                    responses.Add(response);
+            }
+        }
+        else
+        {
+            var (response, error) = await PostJsonAsync<MailtrapResponse, MailtrapErrorResponse>(
+                await MapToProviderRequestAsync(message)
+            );
+
+            if (error is not null)
+                throw ConvertProviderErrorResponseToGenericError(error);
+            
+            if (response is not null)
+                responses.Add(response);
+        }
+
+        return new EmailResponse(responses.Count > 0, responses.SelectMany(response => response.MessageIds).ToArray());
+    }
+
+    protected override MailEaseException ProviderSpecificValidation(MailtrapMessage request)
+    {
+        var mailEaseException = new MailEaseException();
+
+        // Throw an exception if the total number of recipients exceeds the limit and useSplitting is disabled.
+        if (request.ToAddresses.Count + request.CcAddresses.Count + request.BccAddresses.Count > MaxRecipients && !request.UseSplitting)
+            mailEaseException.AddError(
+                BaseEmailMessageErrors.RecipientsExceedLimit(MaxRecipients)
+            );
+
+        return mailEaseException;
     }
 
     private async Task<MailtrapRequest> MapToProviderRequestAsync(MailtrapMessage message)

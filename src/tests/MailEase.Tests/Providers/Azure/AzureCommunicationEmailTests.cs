@@ -30,7 +30,7 @@ public sealed class AzureCommunicationEmailTests : IClassFixture<ConfigurationFi
             ?? throw new InvalidOperationException("TO cannot be empty.");
 
         _emailProvider = Emails.AzureEmailCommunicationService(
-            new AzureCommunicationParams(connectionString)
+            new AzureCommunicationParamsConnectionString(connectionString)
         );
     }
 
@@ -38,7 +38,7 @@ public sealed class AzureCommunicationEmailTests : IClassFixture<ConfigurationFi
     public void SendEmail_WithEmptyConnectionString_ShouldThrowInvalidOperationException()
     {
         var azureCommunicationParamsFunc = () =>
-            Emails.AzureEmailCommunicationService(new AzureCommunicationParams(""));
+            Emails.AzureEmailCommunicationService(new AzureCommunicationParamsConnectionString(""));
         azureCommunicationParamsFunc
             .Should()
             .Throw<InvalidOperationException>("Connection string cannot be empty.");

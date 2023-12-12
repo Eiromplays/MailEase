@@ -6,6 +6,13 @@ namespace MailEase.Providers.Amazon;
 
 public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
 {
+    /// <summary>
+    /// The maximum number of recipients allowed.
+    /// The Amazon SES API supports up to 50 recipients per request.
+    /// See: https://docs.aws.amazon.com/ses/latest/dg/quotas.html
+    /// </summary>
+    private const int MaxRecipients = 50;
+    
     public AmazonSesEmailProvider(AmazonSesParams amazonSesParams)
         : base(
             new Uri(
@@ -27,14 +34,69 @@ public sealed class AmazonSesEmailProvider : BaseEmailProvider<AmazonSesMessage>
     {
         ValidateEmailMessage(message); // Performs some common validations
 
-        var (response, error) = await PostJsonAsync<AmazonSesResponse, AmazonSesErrorResponse>(
-            await MapToProviderRequestAsync(message)
-        );
+        var responses = new List<AmazonSesResponse>();
 
-        if (error is not null)
-            throw ConvertProviderErrorResponseToGenericError(error);
+        var totalRecipients = message.ToAddresses.Count + message.CcAddresses.Count + message.BccAddresses.Count;
+        var recipientsExceedsLimit = totalRecipients > MaxRecipients;
+        
+        if (recipientsExceedsLimit && message.UseSplitting)
+        {
+            const int chunkSize = MaxRecipients / 3;
+            
+            var toAddressChunks = message.ToAddresses.Chunk(chunkSize).ToList();
+            
+            var ccAddressChunks = message.CcAddresses.Chunk(chunkSize).ToList();
+            
+            var bccAddressChunks = message.BccAddresses.Chunk(chunkSize).ToList();
 
-        return new EmailResponse(response is not null, response is not null ? [response.MessageId] : null);
+            var maxChunks = Math.Max(toAddressChunks.Count, Math.Max(ccAddressChunks.Count, bccAddressChunks.Count));
+            for (var i = 0; i < maxChunks; i++)
+            {
+                message.ToAddresses.Clear();
+                message.ToAddresses.AddRange(toAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.CcAddresses.Clear();
+                message.CcAddresses.AddRange(ccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.BccAddresses.Clear();
+                message.BccAddresses.AddRange(bccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                
+                var (response, error) = await PostJsonAsync<AmazonSesResponse, AmazonSesErrorResponse>(
+                    await MapToProviderRequestAsync(message)
+                );
+
+                if (error is not null)
+                    throw ConvertProviderErrorResponseToGenericError(error);
+                
+                if (response is not null) 
+                    responses.Add(response);
+            }
+        }
+        else
+        {
+            var (response, error) = await PostJsonAsync<AmazonSesResponse, AmazonSesErrorResponse>(
+                await MapToProviderRequestAsync(message)
+            );
+
+            if (error is not null)
+                throw ConvertProviderErrorResponseToGenericError(error);
+            
+            if (response is not null)
+                responses.Add(response);
+        }
+
+        return new EmailResponse(responses.Count > 0, responses.Select(response => response.MessageId).ToArray());
+    }
+    
+    protected override MailEaseException ProviderSpecificValidation(AmazonSesMessage request)
+    {
+        var mailEaseException = new MailEaseException();
+
+        // Throw an exception if the total number of recipients exceeds the limit and useSplitting is disabled.
+        if (request.ToAddresses.Count + request.CcAddresses.Count + request.BccAddresses.Count > MaxRecipients && !request.UseSplitting)
+            mailEaseException.AddError(
+                BaseEmailMessageErrors.RecipientsExceedLimit(MaxRecipients)
+            );
+
+        return mailEaseException;
     }
 
     private async Task<AmazonSesRequest> MapToProviderRequestAsync(AmazonSesMessage message)

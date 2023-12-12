@@ -10,9 +10,13 @@ namespace MailEase;
 public static class Emails
 {
     public static IEmailProvider<AzureCommunicationEmailMessage> AzureEmailCommunicationService(
-        AzureCommunicationParams azureCommunicationParams
+        AzureCommunicationParamsConnectionString azureCommunicationParams
     ) => new AzureCommunicationEmailProvider(azureCommunicationParams);
 
+    public static IEmailProvider<AzureCommunicationEmailMessage> AzureEmailCommunicationService(
+        AzureCommunicationParamsEntraId azureCommunicationParams
+    ) => new AzureCommunicationEmailProvider(azureCommunicationParams);
+    
     public static IEmailProvider<AmazonSesMessage> AmazonSes(AmazonSesParams amazonSesParams) =>
         new AmazonSesEmailProvider(amazonSesParams);
 

@@ -8,6 +8,12 @@ namespace MailEase.Providers.Smtp;
 
 public sealed class SmtpEmailProvider : BaseEmailProvider<SmtpMessage>
 {
+    /// <summary>
+    /// The maximum number of recipients allowed.
+    /// SMTP seems to recommend up to 100 recipients per request.
+    /// </summary>
+    private const int MaxRecipients = 100;
+    
     private readonly SmtpParams _smtpParams;
 
     public SmtpEmailProvider(SmtpParams smtpParams)
@@ -31,6 +37,55 @@ public sealed class SmtpEmailProvider : BaseEmailProvider<SmtpMessage>
     {
         ValidateEmailMessage(message); // Performs some common validations
 
+        var totalRecipients = message.ToAddresses.Count + message.CcAddresses.Count + message.BccAddresses.Count;
+        var recipientsExceedsLimit = totalRecipients > MaxRecipients;
+        
+        if (recipientsExceedsLimit && message.UseSplitting)
+        {
+            const int chunkSize = MaxRecipients / 3;
+            
+            var toAddressChunks = message.ToAddresses.Chunk(chunkSize).ToList();
+            
+            var ccAddressChunks = message.CcAddresses.Chunk(chunkSize).ToList();
+            
+            var bccAddressChunks = message.BccAddresses.Chunk(chunkSize).ToList();
+
+            var maxChunks = Math.Max(toAddressChunks.Count, Math.Max(ccAddressChunks.Count, bccAddressChunks.Count));
+            for (var i = 0; i < maxChunks; i++)
+            {
+                message.ToAddresses.Clear();
+                message.ToAddresses.AddRange(toAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.CcAddresses.Clear();
+                message.CcAddresses.AddRange(ccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.BccAddresses.Clear();
+                message.BccAddresses.AddRange(bccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                
+                await SendSmtpEmailAsync(message, cancellationToken);
+            }
+        }
+        else
+        {
+            await SendSmtpEmailAsync(message, cancellationToken);
+        }
+
+        return new EmailResponse(true);
+    }
+    
+    protected override MailEaseException ProviderSpecificValidation(SmtpMessage request)
+    {
+        var mailEaseException = new MailEaseException();
+
+        // Throw an exception if the total number of recipients exceeds the limit and useSplitting is disabled.
+        if (request.ToAddresses.Count + request.CcAddresses.Count + request.BccAddresses.Count > MaxRecipients && !request.UseSplitting)
+            mailEaseException.AddError(
+                BaseEmailMessageErrors.RecipientsExceedLimit(MaxRecipients)
+            );
+
+        return mailEaseException;
+    }
+
+    private async Task SendSmtpEmailAsync(SmtpMessage message, CancellationToken cancellationToken)
+    {
         try
         {
             using var client = new SmtpClient();
@@ -61,8 +116,6 @@ public sealed class SmtpEmailProvider : BaseEmailProvider<SmtpMessage>
             await client.SendAsync(await MapToProviderRequestAsync(message), cancellationToken);
 
             await client.DisconnectAsync(true, cancellationToken);
-
-            return new EmailResponse(true);
         }
         catch (Exception ex)
         {

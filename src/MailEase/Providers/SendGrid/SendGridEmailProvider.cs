@@ -1,4 +1,3 @@
-using System.Text.Json;
 using MailEase.Exceptions;
 using MailEase.Utils;
 
@@ -6,6 +5,13 @@ namespace MailEase.Providers.SendGrid;
 
 public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
 {
+    /// <summary>
+    /// The maximum number of recipients allowed.
+    /// The SendGrid API supports up to 1000 recipients per request.
+    /// See: https://docs.sendgrid.com/api-reference/mail-send/limitations
+    /// </summary>
+    private const int MaxRecipients = 1000;
+    
     public SendGridEmailProvider(SendGridParams sendGridParams)
         : base(
             new Uri($"{sendGridParams.BaseAddress}/{sendGridParams.Version}/{sendGridParams.Path}"),
@@ -18,13 +24,46 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
     )
     {
         ValidateEmailMessage(message); // Performs some common validations
+        
+        var totalRecipients = message.ToAddresses.Count + message.CcAddresses.Count + message.BccAddresses.Count;
+        var recipientsExceedsLimit = totalRecipients > MaxRecipients;
+        
+        if (recipientsExceedsLimit && message.UseSplitting)
+        {
+            const int chunkSize = MaxRecipients / 3;
 
-        var (_, error) = await PostJsonAsync<object, SendGridErrorResponse>(
-            await MapToProviderRequestAsync(message)
-        );
+            var toAddressChunks = message.ToAddresses.Chunk(chunkSize).ToList();
+            
+            var ccAddressChunks = message.CcAddresses.Chunk(chunkSize).ToList();
+            
+            var bccAddressChunks = message.BccAddresses.Chunk(chunkSize).ToList();
 
-        if (error is not null)
-            throw ConvertProviderErrorResponseToGenericError(error);
+            var maxChunks = Math.Max(toAddressChunks.Count, Math.Max(ccAddressChunks.Count, bccAddressChunks.Count));
+            for (var i = 0; i < maxChunks; i++)
+            {
+                message.ToAddresses.Clear();
+                message.ToAddresses.AddRange(toAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.CcAddresses.Clear();
+                message.CcAddresses.AddRange(ccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.BccAddresses.Clear();
+                message.BccAddresses.AddRange(bccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                var (_, error) = await PostJsonAsync<object, SendGridErrorResponse>(
+                    await MapToProviderRequestAsync(message)
+                );
+                
+                if (error is not null)
+                    throw ConvertProviderErrorResponseToGenericError(error);
+            }
+        }
+        else
+        {
+            var (_, error) = await PostJsonAsync<object, SendGridErrorResponse>(
+                await MapToProviderRequestAsync(message)
+            );
+
+            if (error is not null)
+                throw ConvertProviderErrorResponseToGenericError(error);
+        }
 
         return new EmailResponse(true);
     }
@@ -38,6 +77,12 @@ public sealed class SendGridEmailProvider : BaseEmailProvider<SendGridMessage>
                 mailEaseException.AddError(
                     BaseEmailMessageErrors.InvalidSendAt("SendAt must be in the past 72 hours")
                 );
+        
+        // Throw an exception if the total number of recipients exceeds the limit and useSplitting is disabled.
+        if (request.ToAddresses.Count + request.CcAddresses.Count + request.BccAddresses.Count > MaxRecipients && !request.UseSplitting)
+            mailEaseException.AddError(
+                BaseEmailMessageErrors.RecipientsExceedLimit(MaxRecipients)
+            );
 
         return mailEaseException;
     }

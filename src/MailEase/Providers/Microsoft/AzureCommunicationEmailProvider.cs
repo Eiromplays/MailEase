@@ -7,14 +7,23 @@ namespace MailEase.Providers.Microsoft;
 public sealed class AzureCommunicationEmailProvider
     : BaseEmailProvider<AzureCommunicationEmailMessage>
 {
+    /// <summary>
+    /// The maximum number of recipients allowed.
+    /// The Azure Communication Services Email API supports up to 50 recipients per request.
+    /// See: https://learn.microsoft.com/en-us/azure/communication-services/concepts/service-limits#email
+    /// </summary>
+    private const int MaxRecipients = 50;
+    
     private readonly AzureCommunicationParams _azureCommunicationParams;
 
-    public AzureCommunicationEmailProvider(AzureCommunicationParams azureCommunicationParams)
+    public AzureCommunicationEmailProvider(AzureCommunicationParamsConnectionString azureCommunicationParams) 
         : this(
             ConnectionString.Parse(azureCommunicationParams.ConnectionString),
             azureCommunicationParams
-        ) { }
-
+        )
+    {
+    }
+    
     private AzureCommunicationEmailProvider(
         ConnectionString connectionString,
         AzureCommunicationParams azureCommunicationParams
@@ -26,6 +35,17 @@ public sealed class AzureCommunicationEmailProvider
     {
         _azureCommunicationParams = azureCommunicationParams;
     }
+    
+    public AzureCommunicationEmailProvider(
+        AzureCommunicationParamsEntraId azureCommunicationParams
+    )
+        : base(
+            new Uri(azureCommunicationParams.Endpoint),
+            new EntraIdAuthHandler(azureCommunicationParams.ClientSecretCredential)
+        )
+    {
+        _azureCommunicationParams = azureCommunicationParams;
+    }
 
     public override async Task<EmailResponse> SendEmailAsync(
         AzureCommunicationEmailMessage message,
@@ -33,19 +53,59 @@ public sealed class AzureCommunicationEmailProvider
     )
     {
         ValidateEmailMessage(message); // Performs some common validations
+        
+        var responses = new List<AzureCommunicationEmailResponse>();
 
-        var (response, error) = await PostJsonAsync<
-            AzureCommunicationEmailResponse,
-            AzureCommunicationEmailErrorResponse
-        >(
-            $"/emails:send?api-version={_azureCommunicationParams.ApiVersion}",
-            await MapToProviderRequestAsync(message)
-        );
+        var totalRecipients = message.ToAddresses.Count + message.CcAddresses.Count + message.BccAddresses.Count;
+        var recipientsExceedsLimit = totalRecipients > MaxRecipients;
+        
+        if (recipientsExceedsLimit && message.UseSplitting)
+        {
+            const int chunkSize = MaxRecipients / 3;
+            
+            var toAddressChunks = message.ToAddresses.Chunk(chunkSize).ToList();
+            
+            var ccAddressChunks = message.CcAddresses.Chunk(chunkSize).ToList();
+            
+            var bccAddressChunks = message.BccAddresses.Chunk(chunkSize).ToList();
 
-        if (error is not null)
-            throw ConvertProviderErrorResponseToGenericError(error);
+            var maxChunks = Math.Max(toAddressChunks.Count, Math.Max(ccAddressChunks.Count, bccAddressChunks.Count));
+            for (var i = 0; i < maxChunks; i++)
+            {
+                message.ToAddresses.Clear();
+                message.ToAddresses.AddRange(toAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.CcAddresses.Clear();
+                message.CcAddresses.AddRange(ccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                message.BccAddresses.Clear();
+                message.BccAddresses.AddRange(bccAddressChunks.ElementAtOrDefault(i)?.ToList() ?? []);
+                
+                var (response, error) = await PostJsonAsync<AzureCommunicationEmailResponse,
+                    AzureCommunicationEmailErrorResponse>(
+                    await MapToProviderRequestAsync(message)
+                );
 
-        return new EmailResponse(response is not null, response is not null ? [response.Id] : null);
+                if (error is not null)
+                    throw ConvertProviderErrorResponseToGenericError(error);
+                
+                if (response is not null) 
+                    responses.Add(response);
+            }
+        }
+        else
+        {
+            var (response, error) = await PostJsonAsync<AzureCommunicationEmailResponse,
+                AzureCommunicationEmailErrorResponse>(
+                await MapToProviderRequestAsync(message)
+            );
+
+            if (error is not null)
+                throw ConvertProviderErrorResponseToGenericError(error);
+            
+            if (response is not null)
+                responses.Add(response);
+        }
+
+        return new EmailResponse(responses.Count > 0, responses.Select(response => response.Id).ToArray());
     }
 
     protected override MailEaseException ProviderSpecificValidation(
