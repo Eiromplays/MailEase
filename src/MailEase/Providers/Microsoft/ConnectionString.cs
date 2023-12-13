@@ -21,17 +21,23 @@ internal sealed class ConnectionString
     )
     {
         Validate(connectionString, segmentSeparator, keywordValueSeparator, allowEmptyValues);
-        return new ConnectionString(
+
+        var parsedConnectionString = new ConnectionString(
             ParseSegments(connectionString, segmentSeparator, keywordValueSeparator),
             segmentSeparator,
             keywordValueSeparator
         );
-    }
 
-    public static ConnectionString Empty(
-        string segmentSeparator = ";",
-        string keywordValueSeparator = "="
-    ) => new(new Dictionary<string, string>(), segmentSeparator, keywordValueSeparator);
+        if (
+            !parsedConnectionString._pairs.ContainsKey("endpoint")
+            || !parsedConnectionString._pairs.ContainsKey("accesskey")
+        )
+            throw new InvalidOperationException(
+                "Azure Communication Email connection string must contain both an 'Endpoint' and a 'AccessKey'"
+            );
+
+        return parsedConnectionString;
+    }
 
     private ConnectionString(
         Dictionary<string, string> pairs,
@@ -50,31 +56,6 @@ internal sealed class ConnectionString
             : throw new InvalidOperationException(
                 $"Required keyword '{keyword}' is missing in connection string."
             );
-
-    public string? GetNonRequired(string keyword) =>
-        _pairs.TryGetValue(keyword, out var value) ? value : null;
-
-    public bool TryGetSegmentValue(string keyword, out string? value) =>
-        _pairs.TryGetValue(keyword, out value);
-
-    public string? GetSegmentValueOrDefault(string keyword, string defaultValue) =>
-        _pairs.TryGetValue(keyword, out var value) switch
-        {
-            false => defaultValue,
-            true => value
-        };
-
-    public bool ContainsSegmentKey(string keyword) => _pairs.ContainsKey(keyword);
-
-    public void Replace(string keyword, string value)
-    {
-        if (_pairs.ContainsKey(keyword))
-        {
-            _pairs[keyword] = value;
-        }
-    }
-
-    public void Add(string keyword, string value) => _pairs.Add(keyword, value);
 
     public override string ToString()
     {
@@ -125,8 +106,8 @@ internal sealed class ConnectionString
                 segmentEnd - segmentStart,
                 StringComparison.Ordinal
             );
-            int keywordStart = GetStart(connectionString, segmentStart);
-            int keyLength = GetLength(connectionString, keywordStart, kvSeparatorIndex);
+            var keywordStart = GetStart(connectionString, segmentStart);
+            var keyLength = GetLength(connectionString, keywordStart, kvSeparatorIndex);
 
             var keyword = connectionString.Substring(keywordStart, keyLength);
             if (pairs.ContainsKey(keyword))

@@ -26,9 +26,10 @@ public sealed record ClientSecretCredential(string TenantId, string ClientId, st
 
 internal class EntraIdAuthHandler : DelegatingHandler
 {
-    private const string Scope = "https://storage.azure.com//.default";
+    private const string Scope = "https://communication.azure.com//.default";
     public const string AzureServiceVersionHeaderName = "x-ms-version";
     public const string AzureServiceVersion = "2023-11-03";
+    public const string AuthorizationHeaderName = "Authorization";
 
     private readonly HttpClient _authClient = new();
     private readonly ClientSecretCredential _clientSecretCredential;
@@ -74,7 +75,7 @@ internal class EntraIdAuthHandler : DelegatingHandler
         _token = await response.Content.ReadFromJsonAsync<TokenResponse>();
     }
 
-    private async Task AuthenticateAsync(HttpRequestMessage request)
+    protected async Task AuthenticateAsync(HttpRequestMessage request)
     {
         request.Headers.Add(AzureServiceVersionHeaderName, AzureServiceVersion);
 

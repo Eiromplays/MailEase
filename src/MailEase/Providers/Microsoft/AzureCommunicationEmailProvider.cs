@@ -30,7 +30,7 @@ public sealed class AzureCommunicationEmailProvider
     )
         : base(
             new Uri(connectionString.GetRequired("endpoint")),
-            new SharedKeyAuthHandler(connectionString.GetRequired("accessKey"))
+            new SharedKeyAuthHandler(connectionString.GetRequired("accesskey"))
         )
     {
         _azureCommunicationParams = azureCommunicationParams;
@@ -53,6 +53,8 @@ public sealed class AzureCommunicationEmailProvider
     )
     {
         ValidateEmailMessage(message); // Performs some common validations
+
+        var url = $"/emails:send?api-version={_azureCommunicationParams.ApiVersion}";
         
         var responses = new List<AzureCommunicationEmailResponse>();
 
@@ -81,6 +83,7 @@ public sealed class AzureCommunicationEmailProvider
                 
                 var (response, error) = await PostJsonAsync<AzureCommunicationEmailResponse,
                     AzureCommunicationEmailErrorResponse>(
+                    url,
                     await MapToProviderRequestAsync(message)
                 );
 
@@ -95,6 +98,7 @@ public sealed class AzureCommunicationEmailProvider
         {
             var (response, error) = await PostJsonAsync<AzureCommunicationEmailResponse,
                 AzureCommunicationEmailErrorResponse>(
+                url,
                 await MapToProviderRequestAsync(message)
             );
 
