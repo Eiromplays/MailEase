@@ -12,6 +12,8 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/Eiromplays/MailEase</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Eiromplays/MailEase</RepositoryUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>email mail smtp aws ses azure</PackageTags>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <WarningsAsErrors>nullable</WarningsAsErrors>
