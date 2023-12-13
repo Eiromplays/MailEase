@@ -1,3 +1,12 @@
+/*
+ This file contains code derived from Stowage (https://github.com/aloneguid/stowage/blob/3b83e2af3925def45763a6ca052ae3f54a65cd55/src/Stowage/Impl/Microsoft/SharedKeyAuthHandler.cs),
+ under the Apache 2.0 license. See the 'licenses' directory for full license details.
+ This file contains code derived from azure-sdk-for-net (https://github.com/Azure/azure-sdk-for-net/blob/8aa3763a564147c6e79f2a9530d0bc89b0198851/sdk/core/Azure.Core/src/RequestContent.cs#L167),
+ under the MIT license. See the 'licenses' directory for full license details.
+ This file contains code derived from azure-sdk-for-net (https://github.com/Azure/azure-sdk-for-net/blob/8aa3763a564147c6e79f2a9530d0bc89b0198851/sdk/communication/Shared/src/HMACAuthenticationPolicy.cs),
+ under the MIT license. See the 'licenses' directory for full license details.
+*/
+
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
