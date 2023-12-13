@@ -10,6 +10,8 @@
         <PackageTags>email mail smtp</PackageTags>
         <Version>1.0.0</Version>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/Eiromplays/MailEase</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Eiromplays/MailEase</RepositoryUrl>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <WarningsAsErrors>nullable</WarningsAsErrors>
