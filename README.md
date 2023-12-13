@@ -34,6 +34,7 @@ Include a concise explanation about the Tech Stack employed.
 ## 📝 Project Summary
 
 - [.github](.github): GitHub workflows for CI/CD automation.
+- [licenses](licenses): This is where you can find all licenses for packages/libraries I have taken inspiration/code from.
 - [src/MailEase](src/MailEase): Core functionality and business logic of the MailEase application.
 - [src/MailEase/Providers](src/MailEase/Providers): Implementations of various email providers.
 - [src/MailEase/Providers/Amazon](src/MailEase/Providers/Amazon): Integration with Amazon SES for sending emails.
@@ -43,7 +44,6 @@ Include a concise explanation about the Tech Stack employed.
 - [src/MailEase/Providers/Microsoft](src/MailEase/Providers/Microsoft): Integration with Microsoft Azure Communication Services Email.
 - [src/MailEase/Providers/SendGrid](src/MailEase/Providers/SendGrid): Integration with SendGrid for email delivery.
 - [src/MailEase/Providers/Smtp](src/MailEase/Providers/Smtp): Integration with SMTP servers for email sending.
-- [licenses](licenses): This is where you can find all licenses for packages/libraries I have taken inspiration/code from.
 
 Note: The summary provided is based on the assumption of the project's structure and the directory names. The actual functionalities/components may vary.
 
