@@ -57,5 +57,14 @@ public enum MailEaseErrorCode
     /// <summary>
     /// This code is returned when the provided 'SendAt' date or time is not valid.
     /// </summary>
-    InvalidSendAt
+    InvalidSendAt,
+    
+    /// <summary>
+    /// This code is returned when the total recipients exceed the provider limit.
+    /// And the 'UseSplitting' property is set to <c>false</c>.
+    /// </summary>
+    /// <remarks>
+    /// See <see cref="BaseEmailMessage.UseSplitting"/>
+    /// </remarks>
+    RecipientsExceedLimit
 }

@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text;
-using System.Text.Json;
 using MailEase.Providers.Microsoft;
 
 namespace MailEase.Tests.Providers.Azure;
@@ -97,7 +96,7 @@ public sealed class SharedKeyAuthHandlerTests
         var date = new DateTime(2023, 12, 27, 0, 0, 0, DateTimeKind.Utc);
         const string expectedSignature =
             "HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=Y/QjmS9N+yVnHqARODZ2wujyxSuPW2PLW7azhyRZpm8=";
-        
+
         // Act
         var result = await Handler.ExecuteRequestAsync(HttpMethod.Get, date);
 

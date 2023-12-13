@@ -1,5 +1,6 @@
 using System.Text;
 using MailEase.Providers.Mailtrap;
+using MailEase.Tests.Fakes;
 using Microsoft.Extensions.Configuration;
 
 namespace MailEase.Tests.Providers;
@@ -30,10 +31,10 @@ public sealed class MailtrapEmailTests : IClassFixture<ConfigurationFixture>
             config.GetValue<string>("MAILTRAP_TO")
             ?? throw new InvalidOperationException("TO cannot be empty.");
         // TODO: Implement/use this when I get access to the MailTrap sandbox mode
-        /*_emailProvider = Emails.Mailtrap(
+        _emailProvider = Emails.Mailtrap(
             new MailtrapParams(apiKey, "https://sandbox.api.mailtrap.io", $"api/send/{inboxId}")
-        );*/
-        _emailProvider = Emails.Mailtrap(new MailtrapParams(apiKey));
+        );
+        //_emailProvider = Emails.Mailtrap(new MailtrapParams(apiKey));
     }
 
     [Fact]
@@ -76,5 +77,61 @@ public sealed class MailtrapEmailTests : IClassFixture<ConfigurationFixture>
         };
 
         return _emailProvider.SendEmailAsync(request);
+    }
+
+    [Fact]
+    public Task SendEmail_With1500RecipientsAndUseSplitting_ShouldSucceed()
+    {
+        const int totalRecipients = 1500;
+        const int recipientSize = totalRecipients / 3;
+
+        var uniqueEmails =
+            new FakeEmailAddress().Generate(totalRecipients) ?? new List<EmailAddress>();
+        var toAddresses = uniqueEmails.GetRange(0, recipientSize);
+        var ccAddresses = uniqueEmails.GetRange(recipientSize, recipientSize);
+        var bccAddresses = uniqueEmails.GetRange(recipientSize * 2, recipientSize);
+
+        var request = new MailtrapMessage
+        {
+            Subject = _subject,
+            From = _from,
+            ToAddresses = toAddresses,
+            CcAddresses = ccAddresses,
+            BccAddresses = bccAddresses,
+            Html = "<h1>Hello</h1>"
+        };
+
+        return _emailProvider.SendEmailAsync(request);
+    }
+
+    [Fact]
+    public async Task SendEmail_With1500RecipientsAndWithoutUseSplitting_ShouldThrowMailEaseException()
+    {
+        const int totalRecipients = 1500;
+        const int recipientSize = totalRecipients / 3;
+
+        var uniqueEmails =
+            new FakeEmailAddress().Generate(totalRecipients) ?? new List<EmailAddress>();
+        var toAddresses = uniqueEmails.GetRange(0, recipientSize);
+        var ccAddresses = uniqueEmails.GetRange(recipientSize, recipientSize);
+        var bccAddresses = uniqueEmails.GetRange(recipientSize * 2, recipientSize);
+
+        var request = new MailtrapMessage
+        {
+            Subject = _subject,
+            From = _from,
+            ToAddresses = toAddresses,
+            CcAddresses = ccAddresses,
+            BccAddresses = bccAddresses,
+            Html = "<h1>Hello</h1>",
+            UseSplitting = false
+        };
+
+        var sendEmailAsync = () => _emailProvider.SendEmailAsync(request);
+
+        await sendEmailAsync
+            .Should()
+            .ThrowAsync<MailEaseException>()
+            .Where(x => x.Errors.Any(y => y.Code == MailEaseErrorCode.RecipientsExceedLimit));
     }
 }
