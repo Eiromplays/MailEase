@@ -1,5 +1,4 @@
 name: Relase and Publish
-
 on:
   pull_request_target:
     paths-ignore:
@@ -8,10 +7,9 @@ on:
       - closed
     branches:
       - main
-
 jobs:
   release:
-    if: github.event.pull_request.merge == 'true'
+    if: github.event.pull_request.merged
     name: Release
     runs-on: ubuntu-latest
     steps:
@@ -29,7 +27,7 @@ jobs:
           echo "VERSION=$(cat library/version.txt)" >> $GITHUB_ENV
       - name: Publish to nuget.org
         run: dotnet nuget push library/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-        
+
       - name: Create a new GitHub Release
         uses: softprops/action-gh-release@v1
         with:
