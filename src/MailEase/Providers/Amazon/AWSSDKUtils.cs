@@ -1,4 +1,7 @@
-// Original source code: https://github.com/aloneguid/stowage/blob/master/src/Stowage/Impl/Amazon/AWSSDKUtils.cs
+/*
+ This file contains code derived from Stowage (https://github.com/aloneguid/stowage/blob/3b83e2af3925def45763a6ca052ae3f54a65cd55/src/Stowage/Impl/Amazon/AWSSDKUtils.cs),
+ under the Apache 2.0 license. See the 'licenses' directory for full license details.
+*/
 
 using System.Text;
 

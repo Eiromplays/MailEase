@@ -1,3 +1,8 @@
+/*
+    This file contains code derived from Stowage (https://github.com/aloneguid/stowage/blob/3b83e2af3925def45763a6ca052ae3f54a65cd55/src/NetBox.cs#L2659),
+    under the Apache 2.0 license. See the 'licenses' directory for full license details.
+*/
+
 using System.Text;
 
 namespace MailEase.Providers.Amazon;

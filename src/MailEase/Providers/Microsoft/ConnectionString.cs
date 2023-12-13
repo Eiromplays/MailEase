@@ -1,4 +1,7 @@
-// Original source code: https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/Shared/ConnectionString.cs
+/*
+ This file contains code derived from azure-sdk-for-net (https://github.com/Azure/azure-sdk-for-net/blob/8aa3763a564147c6e79f2a9530d0bc89b0198851/sdk/core/Azure.Core/src/Shared/ConnectionString.cs),
+ under the MIT license. See the 'licenses' directory for full license details.
+*/
 
 using System.Text;
 

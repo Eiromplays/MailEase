@@ -1,4 +1,3 @@
-using System.Text.Json;
 using MailEase.Exceptions;
 using MailEase.Utils;
 
