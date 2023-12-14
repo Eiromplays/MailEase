@@ -4,8 +4,6 @@
 </a>
 </p>
 
-
-
 <p align="center">
 <img src="https://img.shields.io/github/contributors/Eiromplays/MailEase" alt="GitHub contributors" />
 <img src="https://img.shields.io/github/discussions/Eiromplays/MailEase" alt="GitHub discussions" />
