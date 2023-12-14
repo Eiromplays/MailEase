@@ -45,8 +45,6 @@ Include a concise explanation about the Tech Stack employed.
 - [src/MailEase/Providers/SendGrid](src/MailEase/Providers/SendGrid): Integration with SendGrid for email delivery.
 - [src/MailEase/Providers/Smtp](src/MailEase/Providers/Smtp): Integration with SMTP servers for email sending.
 
-Note: The summary provided is based on the assumption of the project's structure and the directory names. The actual functionalities/components may vary.
-
 ## ⚙️ Setting Up (WIP)
 
 #### WIP
@@ -59,18 +57,19 @@ Note: The summary provided is based on the assumption of the project's structure
 git clone https://github.com/Eiromplays/MailEase
 ```
 
-## 🙌 Contributors
+## ✨ Contributors
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
-
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
-
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
 ## 📄 License
 
 This project is licensed under the **MIT License** - see the [**MIT License**](https://github.com/Eiromplays/MailEase/blob/main/LICENSE) file for details.
-
